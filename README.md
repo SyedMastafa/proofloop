@@ -1,35 +1,37 @@
 # ProofLoop
 
-AI-powered Customer Proof & Referral Platform for SaaS companies.
+AI-powered Customer Proof & Referral Platform for SaaS.
 
 ## Features
 
-- Modern dark landing page
-- AI Testimonial / Case Study / Social post generator (Gemini)
-- Save stories + Public pages (`/p/[id]`) with branding
-- My Stories list
-- Supabase Auth (Login / Signup)
-- **Embeddable widget** (`/embed` + `/api/embed`)
-- Database schema ready
+- Landing + AI Generator (Gemini): testimonials, case studies, social posts
+- Save stories + public pages (`/p/[id]`) with branding
+- Embeddable widget (`/embed`)
+- Supabase Auth
+- **Referral tracking** (`/referrals`, `/r/[code]`)
 
-## Quick start
+## Routes
+
+| Path | Description |
+|------|-------------|
+| `/` | Landing |
+| `/dashboard` | AI Generator |
+| `/stories` | Saved stories |
+| `/p/[id]` | Public success page |
+| `/embed` | Widget embed code |
+| `/referrals` | Create & track referral links |
+| `/r/[code]` | Referral click → signup |
+| `/login` `/signup` | Auth |
+
+## Setup
 
 ```bash
 git clone https://github.com/SyedMastafa/proofloop.git
-cd proofloop
-npm install
+cd proofloop && npm install
 cp .env.example .env.local
-# Add GEMINI_API_KEY + Supabase keys
-npm run dev
 ```
 
-- `/` Landing
-- `/dashboard` AI Generator
-- `/stories` Saved stories
-- `/embed` Widget embed code
-- `/p/[id]` Public success page
-
-## Env vars (never commit real keys)
+Fill `.env.local` (or Vercel env at deploy):
 
 ```
 GEMINI_API_KEY=
@@ -37,23 +39,24 @@ NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 ```
 
-Put production keys only in **Vercel Environment Variables**.
+Supabase SQL:
+1. `supabase/schema.sql`
+2. Optional: `supabase/schema_referrals.sql`
 
-## Supabase
+```bash
+npm run dev
+```
 
-1. Create project at supabase.com
-2. Run `supabase/schema.sql` in SQL Editor
-3. Copy URL + anon key to `.env.local`
+## Deploy
+
+Push to GitHub → Import on Vercel → add env vars → Deploy. Never commit real API keys.
 
 ## Roadmap
 
-- [x] Landing + AI Generator
-- [x] Save + Public pages
-- [x] Auth + Database schema
-- [x] Embeddable widget
-- [ ] Referral tracking
+- [x] AI Generator + public pages
+- [x] Auth + schema
+- [x] Embed widget
+- [x] Referral tracking
 - [ ] Stripe billing
-
-## License
 
 MIT
