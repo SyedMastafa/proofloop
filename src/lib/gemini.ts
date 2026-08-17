@@ -2,8 +2,11 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
+// gemini-1.5-flash is retired — use current Flash model
+const MODEL = "gemini-2.5-flash";
+
 export async function polishTestimonial(rawFeedback: string, companyName?: string) {
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  const model = genAI.getGenerativeModel({ model: MODEL });
 
   const prompt = `
 You are an expert B2B SaaS copywriter. 
@@ -40,7 +43,7 @@ export async function generateCaseStudy(data: {
   results: string;
   quote?: string;
 }) {
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  const model = genAI.getGenerativeModel({ model: MODEL });
 
   const prompt = `
 You are an expert B2B case study writer for SaaS companies.
@@ -79,7 +82,7 @@ Keep it concise, metric-driven, and professional. Do not invent any numbers.
 }
 
 export async function generateSocialPosts(caseStudyOrTestimonial: string) {
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  const model = genAI.getGenerativeModel({ model: MODEL });
 
   const prompt = `
 Based on this customer success content, generate 2 social media posts:
