@@ -4,31 +4,42 @@ AI-powered Customer Proof & Referral Platform for SaaS companies.
 
 Turn customer success stories into automated marketing machines.
 
-## Current MVP Features
+## Features
 
 - Modern dark landing page
 - AI Testimonial Polish (Gemini 1.5 Flash)
-- Case Study Generator (Challenge → Solution → Results)
-- Social Media Post Generator (LinkedIn + X)
-- Save stories (localStorage for now)
-- Public success story pages (`/p/[id]`) with "Powered by ProofLoop" branding
+- Case Study Generator
+- Social Media Post Generator
+- Save stories + Public success pages (`/p/[id]`) with "Powered by ProofLoop"
 - My Stories list
-- Login / Signup UI (auth coming next)
+- **Supabase Auth** (Login / Signup)
+- Database schema ready (stories table + RLS)
 
 ## Setup
 
+1. Clone & install
 ```bash
+git clone https://github.com/SyedMastafa/proofloop.git
+cd proofloop
 npm install
 ```
 
-Create `.env.local`:
+2. Environment variables  
+Copy `.env.example` → `.env.local` and fill:
 
 ```
-GEMINI_API_KEY=your_key_here
+GEMINI_API_KEY=...
+NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 ```
 
-Get free Gemini key: https://aistudio.google.com/apikey
+- Gemini free key: https://aistudio.google.com/apikey
+- Supabase: https://supabase.com → New project → Settings → API
 
+3. Run the SQL schema  
+In Supabase Dashboard → SQL Editor → paste contents of `supabase/schema.sql` → Run
+
+4. Start
 ```bash
 npm run dev
 ```
@@ -41,18 +52,17 @@ npm run dev
 
 - [x] Landing + AI Generator
 - [x] Save + Public pages
-- [ ] Real Auth + Database (Supabase)
+- [x] Real Auth + Database (Supabase)
 - [ ] Embeddable widget
 - [ ] Referral tracking
 - [ ] Stripe billing
 - [ ] ROI calculator
 
-## Tech Stack
+## Tech
 
-- Next.js 15 (App Router) + TypeScript
-- Tailwind CSS
-- Google Gemini (free tier)
-- localStorage (temporary storage)
+- Next.js 15 + TypeScript + Tailwind
+- Google Gemini (free)
+- Supabase (Auth + Postgres)
 
 ## License
 
