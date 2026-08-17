@@ -2,8 +2,8 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
-// gemini-1.5-flash is retired — use current Flash model
-const MODEL = "gemini-2.5-flash";
+// Current model for new API keys (1.5 / 2.5 retired for new users)
+const MODEL = "gemini-3.6-flash";
 
 export async function polishTestimonial(rawFeedback: string, companyName?: string) {
   const model = genAI.getGenerativeModel({ model: MODEL });
