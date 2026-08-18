@@ -1,6 +1,5 @@
 @import "tailwindcss";
 
-/* Default = dark (matches product positioning) */
 :root,
 html.dark {
   --background: #030712;
@@ -14,7 +13,7 @@ html.dark {
   --surface: rgba(255, 255, 255, 0.02);
   --surface-hover: rgba(255, 255, 255, 0.04);
   --nav-bg: rgba(3, 7, 18, 0.8);
-  --hero-glow: rgba(99, 102, 241, 0.22);
+  --hero-glow: rgba(99, 102, 241, 0.28);
   --badge-bg: rgba(99, 102, 241, 0.1);
   --badge-border: rgba(99, 102, 241, 0.25);
   --badge-text: #a5b4fc;
@@ -34,7 +33,7 @@ html.light {
   --surface: rgba(15, 23, 42, 0.02);
   --surface-hover: rgba(15, 23, 42, 0.04);
   --nav-bg: rgba(248, 250, 252, 0.85);
-  --hero-glow: rgba(99, 102, 241, 0.12);
+  --hero-glow: rgba(99, 102, 241, 0.14);
   --badge-bg: rgba(79, 70, 229, 0.08);
   --badge-border: rgba(79, 70, 229, 0.2);
   --badge-text: #4f46e5;
@@ -82,10 +81,26 @@ html {
   border-radius: 4px;
 }
 
-@keyframes fade-up {
+/* —— Scroll reveal —— */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition:
+    opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
+}
+
+.reveal.reveal-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* —— Hero entrance (stagger) —— */
+@keyframes hero-in {
   from {
     opacity: 0;
-    transform: translateY(12px);
+    transform: translateY(20px);
   }
   to {
     opacity: 1;
@@ -93,6 +108,119 @@ html {
   }
 }
 
-.animate-fade-up {
-  animation: fade-up 0.6s ease-out both;
+.hero-in {
+  opacity: 0;
+  animation: hero-in 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.hero-delay-1 { animation-delay: 0.08s; }
+.hero-delay-2 { animation-delay: 0.18s; }
+.hero-delay-3 { animation-delay: 0.3s; }
+.hero-delay-4 { animation-delay: 0.42s; }
+.hero-delay-5 { animation-delay: 0.54s; }
+.hero-delay-6 { animation-delay: 0.66s; }
+
+/* —— Floating orbs —— */
+@keyframes float-a {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(12px, -18px) scale(1.05); }
+}
+
+@keyframes float-b {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-16px, 14px) scale(1.08); }
+}
+
+@keyframes float-c {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(8px, 10px); }
+}
+
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.orb {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(64px);
+  pointer-events: none;
+}
+
+.orb-a {
+  width: 420px;
+  height: 420px;
+  background: rgba(99, 102, 241, 0.35);
+  top: -8%;
+  left: 15%;
+  animation: float-a 12s ease-in-out infinite;
+}
+
+.orb-b {
+  width: 360px;
+  height: 360px;
+  background: rgba(34, 211, 238, 0.18);
+  top: 10%;
+  right: 8%;
+  animation: float-b 14s ease-in-out infinite;
+}
+
+.orb-c {
+  width: 280px;
+  height: 280px;
+  background: rgba(167, 139, 250, 0.2);
+  bottom: 5%;
+  left: 40%;
+  animation: float-c 16s ease-in-out infinite;
+}
+
+html.light .orb-a { background: rgba(99, 102, 241, 0.2); }
+html.light .orb-b { background: rgba(34, 211, 238, 0.12); }
+html.light .orb-c { background: rgba(167, 139, 250, 0.12); }
+
+.hero-gradient-text {
+  background: linear-gradient(90deg, #818cf8, #a78bfa, #22d3ee, #818cf8);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: gradient-shift 8s ease infinite;
+}
+
+/* Mock window shimmer */
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.mock-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 40%,
+    rgba(255, 255, 255, 0.06) 50%,
+    transparent 60%
+  );
+  animation: shimmer 4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .reveal.reveal-visible {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .hero-in {
+    opacity: 1;
+    animation: none;
+  }
+  .orb,
+  .hero-gradient-text,
+  .mock-shimmer::after {
+    animation: none !important;
+  }
 }
