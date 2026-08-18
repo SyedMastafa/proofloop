@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Reveal } from "@/components/reveal";
+import { HeroLottie } from "@/components/hero-lottie";
 
 const features = [
   {
@@ -81,7 +82,6 @@ export default function Home() {
         </div>
       </nav>
 
-      {/* HERO */}
       <section className="relative overflow-hidden pt-28 pb-16 sm:pt-36 sm:pb-24">
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
           <div className="orb orb-a" />
@@ -98,7 +98,7 @@ export default function Home() {
 
         <div className="relative mx-auto max-w-4xl px-6 text-center">
           <div
-            className="hero-in hero-delay-1 mb-8 inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-xs font-medium"
+            className="hero-in hero-delay-1 mb-6 inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-xs font-medium"
             style={{
               borderColor: "var(--badge-border)",
               background: "var(--badge-bg)",
@@ -112,18 +112,23 @@ export default function Home() {
             AI-powered customer proof for SaaS
           </div>
 
-          <h1 className="hero-in hero-delay-2 mb-6 text-4xl font-bold tracking-tight text-[var(--foreground)] sm:text-6xl sm:leading-[1.08]">
+          {/* Lottie */}
+          <div className="hero-in hero-delay-2 mb-4 flex justify-center">
+            <HeroLottie />
+          </div>
+
+          <h1 className="hero-in hero-delay-3 mb-6 text-4xl font-bold tracking-tight text-[var(--foreground)] sm:text-6xl sm:leading-[1.08]">
             Turn customer success
             <br />
             <span className="hero-gradient-text">into marketing machines</span>
           </h1>
 
-          <p className="hero-in hero-delay-3 mx-auto mb-10 max-w-2xl text-base leading-relaxed text-[var(--muted)] sm:text-lg">
+          <p className="hero-in hero-delay-4 mx-auto mb-10 max-w-2xl text-base leading-relaxed text-[var(--muted)] sm:text-lg">
             Automatically generate testimonials, case studies, embeds, and referral links from
             real customer feedback — with near-zero marketing effort.
           </p>
 
-          <div className="hero-in hero-delay-4 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
+          <div className="hero-in hero-delay-5 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
             <Link
               href="/dashboard"
               className="inline-flex h-12 items-center rounded-xl bg-[var(--primary)] px-7 text-[15px] font-semibold text-white shadow-lg shadow-indigo-500/30 transition hover:opacity-90 hover:shadow-indigo-500/40"
@@ -138,13 +143,12 @@ export default function Home() {
             </Link>
           </div>
 
-          <p className="hero-in hero-delay-5 mt-6 text-xs text-[var(--muted)]">
+          <p className="hero-in hero-delay-6 mt-6 text-xs text-[var(--muted)]">
             Free plan · No credit card · Built-in product-led growth
           </p>
         </div>
 
-        {/* Product preview mock */}
-        <div className="hero-in hero-delay-6 relative mx-auto mt-16 max-w-3xl px-6">
+        <div className="hero-in hero-delay-6 relative mx-auto mt-14 max-w-3xl px-6">
           <div className="mock-shimmer relative overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--card)] shadow-2xl shadow-indigo-500/10">
             <div className="flex items-center gap-2 border-b border-[var(--border)] px-4 py-3">
               <span className="h-2.5 w-2.5 rounded-full bg-red-400/80" />
@@ -175,7 +179,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Trust strip */}
       <Reveal>
         <section className="border-y border-[var(--border)] bg-[var(--surface)] py-8">
           <div className="mx-auto max-w-6xl px-6">
@@ -195,7 +198,6 @@ export default function Home() {
         </section>
       </Reveal>
 
-      {/* Features */}
       <section id="features" className="py-24 sm:py-28">
         <div className="mx-auto max-w-6xl px-6">
           <Reveal>
@@ -236,7 +238,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* How it works */}
       <section id="how" className="border-t border-[var(--border)] py-24 sm:py-28">
         <div className="mx-auto max-w-6xl px-6">
           <Reveal>
@@ -260,7 +261,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA */}
       <Reveal>
         <section className="border-t border-[var(--border)] py-24">
           <div className="mx-auto max-w-3xl px-6 text-center">
