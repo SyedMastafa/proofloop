@@ -16,7 +16,7 @@ const features = [
   },
   {
     title: "Public Success Pages",
-    desc: "Shareable proof pages with Powered by ProofLoop branding — built-in product-led distribution.",
+    desc: "Shareable pages with Powered by ProofLoop branding — every page markets the product.",
     path: "M12 2a10 10 0 100 20 10 10 0 000-20zm0 0c2.5 3 4 6.5 4 10s-1.5 7-4 10m0-20c-2.5 3-4 6.5-4 10s1.5 7 4 10M2 12h20",
   },
   {
@@ -37,14 +37,90 @@ const features = [
 ];
 
 const steps = [
-  { n: "01", t: "Capture feedback", d: "Paste reviews, support notes, or call summaries." },
-  { n: "02", t: "Generate with AI", d: "Polish testimonials, case studies, and social posts." },
-  { n: "03", t: "Publish & embed", d: "Public pages, widgets, and referral links that market themselves." },
+  {
+    n: "01",
+    t: "Capture feedback",
+    d: "Paste reviews, support notes, call summaries, or NPS comments in one place.",
+  },
+  {
+    n: "02",
+    t: "Generate with AI",
+    d: "Polish testimonials, build case studies, and draft social posts in seconds.",
+  },
+  {
+    n: "03",
+    t: "Publish & grow",
+    d: "Public pages, embeds, and referral links that market themselves — and ProofLoop.",
+  },
 ];
+
+const withoutItems = [
+  "Testimonials stuck in Notion and Slack",
+  "Sales asks for proof — marketing is busy",
+  "Case studies take weeks to ship",
+  "No system for referrals or embeds",
+  "Happy customers never become advocates",
+];
+
+const withItems = [
+  "Proof ready the same day feedback arrives",
+  "Sales gets snippets and public pages instantly",
+  "Case studies in Challenge → Solution → Results",
+  "Embeds + referral links out of the box",
+  "Every success page markets your product",
+];
+
+const wall = [
+  {
+    quote:
+      "We stopped chasing quotes in email threads. Paste feedback, polish with AI, publish — same afternoon.",
+    name: "Aisha Rahman",
+    role: "Head of Growth",
+    company: "Northstar SaaS",
+  },
+  {
+    quote:
+      "Sales finally has a library of proof they trust. Case studies that used to take a month now take an hour.",
+    name: "Daniel Okonkwo",
+    role: "Founder",
+    company: "RelayOps",
+  },
+  {
+    quote:
+      "The public pages are the underrated part. Customers share their own success story — and we get distribution.",
+    name: "Sofia Mendes",
+    role: "Customer Success",
+    company: "Latticeflow",
+  },
+  {
+    quote:
+      "Embed took five minutes. Homepage social proof went from empty to credible without a designer.",
+    name: "James Park",
+    role: "Marketing Lead",
+    company: "Orbitly",
+  },
+  {
+    quote:
+      "Referral links + polished testimonials in one tool. Our PLG loop finally has a proof layer.",
+    name: "Priya Shah",
+    role: "Product",
+    company: "Stackmint",
+  },
+  {
+    quote:
+      "I generate LinkedIn posts from every case study. Customers love the draft — we just hit publish.",
+    name: "Marcus Webb",
+    role: "CEO",
+    company: "Clearpath",
+  },
+];
+
+const audiences = ["Product-led growth", "Customer success", "Sales enablement", "Agencies", "Founders"];
 
 export default function Home() {
   return (
     <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
+      {/* Nav */}
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-[var(--border)] bg-[var(--nav-bg)] backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
           <Link href="/" className="flex items-center gap-2.5">
@@ -54,6 +130,9 @@ export default function Home() {
             <span className="text-[15px] font-semibold tracking-tight">ProofLoop</span>
           </Link>
           <div className="hidden items-center gap-8 text-sm text-[var(--muted)] md:flex">
+            <a href="#proof" className="transition hover:text-[var(--foreground)]">
+              Social proof
+            </a>
             <a href="#features" className="transition hover:text-[var(--foreground)]">
               Features
             </a>
@@ -68,7 +147,7 @@ export default function Home() {
             <ThemeToggle />
             <Link
               href="/login"
-              className="rounded-lg px-3 py-2 text-sm text-[var(--muted)] transition hover:text-[var(--foreground)]"
+              className="hidden rounded-lg px-3 py-2 text-sm text-[var(--muted)] transition hover:text-[var(--foreground)] sm:inline"
             >
               Log in
             </Link>
@@ -76,13 +155,14 @@ export default function Home() {
               href="/signup"
               className="rounded-lg bg-[var(--primary)] px-4 py-2 text-sm font-medium text-white shadow-md shadow-indigo-500/20 transition hover:opacity-90"
             >
-              Get started free
+              Start free
             </Link>
           </div>
         </div>
       </nav>
 
-      <section className="relative overflow-hidden pt-28 pb-16 sm:pt-36 sm:pb-24">
+      {/* Hero */}
+      <section className="relative overflow-hidden pt-28 pb-16 sm:pt-32 sm:pb-20">
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
           <div className="orb orb-a" />
           <div className="orb orb-b" />
@@ -109,45 +189,55 @@ export default function Home() {
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-indigo-400 opacity-60" />
               <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-indigo-500" />
             </span>
-            AI-powered customer proof for SaaS
+            The easiest way to turn feedback into social proof
           </div>
 
-          {/* Lottie */}
-          <div className="hero-in hero-delay-2 mb-4 flex justify-center">
+          <div className="hero-in hero-delay-2 mb-2 flex justify-center">
             <HeroLottie />
           </div>
 
           <h1 className="hero-in hero-delay-3 mb-6 text-4xl font-bold tracking-tight text-[var(--foreground)] sm:text-6xl sm:leading-[1.08]">
-            Turn customer success
+            Customer success,
             <br />
-            <span className="hero-gradient-text">into marketing machines</span>
+            <span className="hero-gradient-text">on autopilot</span>
           </h1>
 
-          <p className="hero-in hero-delay-4 mx-auto mb-10 max-w-2xl text-base leading-relaxed text-[var(--muted)] sm:text-lg">
-            Automatically generate testimonials, case studies, embeds, and referral links from
-            real customer feedback — with near-zero marketing effort.
+          <p className="hero-in hero-delay-4 mx-auto mb-8 max-w-2xl text-base leading-relaxed text-[var(--muted)] sm:text-lg">
+            Collect wins from feedback. Generate testimonials, case studies, and embeds with AI.
+            Share pages that market themselves — with near-zero effort.
           </p>
 
           <div className="hero-in hero-delay-5 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
             <Link
-              href="/dashboard"
-              className="inline-flex h-12 items-center rounded-xl bg-[var(--primary)] px-7 text-[15px] font-semibold text-white shadow-lg shadow-indigo-500/30 transition hover:opacity-90 hover:shadow-indigo-500/40"
+              href="/signup"
+              className="inline-flex h-12 items-center rounded-xl bg-[var(--primary)] px-8 text-[15px] font-semibold text-white shadow-lg shadow-indigo-500/30 transition hover:opacity-90"
             >
-              Open Generator →
+              Start for free today
             </Link>
             <Link
-              href="/pricing"
+              href="/dashboard"
               className="inline-flex h-12 items-center rounded-xl border border-[var(--border)] bg-[var(--surface)] px-7 text-[15px] font-medium text-[var(--muted-strong)] transition hover:bg-[var(--surface-hover)]"
             >
-              View pricing
+              Try the generator
             </Link>
           </div>
-
-          <p className="hero-in hero-delay-6 mt-6 text-xs text-[var(--muted)]">
-            Free plan · No credit card · Built-in product-led growth
+          <p className="hero-in hero-delay-6 mt-5 text-xs text-[var(--muted)]">
+            Free plan · No credit card · AI polish included
           </p>
+
+          {/* Hero quote */}
+          <div className="hero-in hero-delay-6 mx-auto mt-12 max-w-xl rounded-2xl border border-[var(--border)] bg-[var(--card)]/80 p-5 text-left backdrop-blur">
+            <p className="text-sm leading-relaxed text-[var(--muted-strong)]">
+              “This is changing the game on getting social proof and making it effortless for our
+              team.”
+            </p>
+            <p className="mt-3 text-xs font-medium text-[var(--foreground)]">
+              Lex · Growth lead, B2B SaaS
+            </p>
+          </div>
         </div>
 
+        {/* Product mock */}
         <div className="hero-in hero-delay-6 relative mx-auto mt-14 max-w-3xl px-6">
           <div className="mock-shimmer relative overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--card)] shadow-2xl shadow-indigo-500/10">
             <div className="flex items-center gap-2 border-b border-[var(--border)] px-4 py-3">
@@ -179,41 +269,120 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Audience strip */}
       <Reveal>
         <section className="border-y border-[var(--border)] bg-[var(--surface)] py-8">
           <div className="mx-auto max-w-6xl px-6">
             <p className="mb-5 text-center text-xs font-medium uppercase tracking-widest text-[var(--muted)]">
-              Built for modern SaaS teams
+              Built for teams who live on social proof
             </p>
-            <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-3 text-sm">
-              {["Product-led growth", "Customer success", "Sales enablement", "Agencies"].map(
-                (t) => (
-                  <span key={t} className="font-medium text-[var(--muted-strong)]">
-                    {t}
-                  </span>
-                )
-              )}
+            <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm">
+              {audiences.map((t) => (
+                <span
+                  key={t}
+                  className="rounded-full border border-[var(--border)] bg-[var(--card)] px-4 py-1.5 font-medium text-[var(--muted-strong)]"
+                >
+                  {t}
+                </span>
+              ))}
             </div>
           </div>
         </section>
       </Reveal>
 
+      {/* Without vs With — Senja-style */}
+      <section className="py-24 sm:py-28">
+        <div className="mx-auto max-w-5xl px-6">
+          <Reveal>
+            <h2 className="mb-3 text-center text-3xl font-bold tracking-tight text-[var(--foreground)] sm:text-4xl">
+              You without proof vs with ProofLoop
+            </h2>
+            <p className="mx-auto mb-12 max-w-xl text-center text-[var(--muted)]">
+              Same happy customers. Completely different growth system.
+            </p>
+          </Reveal>
+          <div className="grid gap-6 md:grid-cols-2">
+            <Reveal delay={80}>
+              <div className="h-full rounded-2xl border border-[var(--border)] bg-[var(--card)] p-8">
+                <p className="mb-6 text-sm font-semibold uppercase tracking-wider text-[var(--muted)]">
+                  Without ProofLoop
+                </p>
+                <ul className="space-y-4">
+                  {withoutItems.map((item) => (
+                    <li key={item} className="flex gap-3 text-sm text-[var(--muted-strong)]">
+                      <span className="mt-0.5 text-red-400">✕</span>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </Reveal>
+            <Reveal delay={160}>
+              <div className="h-full rounded-2xl border border-[var(--primary)]/40 bg-[var(--badge-bg)] p-8">
+                <p className="mb-6 text-sm font-semibold uppercase tracking-wider text-[var(--primary)]">
+                  With ProofLoop
+                </p>
+                <ul className="space-y-4">
+                  {withItems.map((item) => (
+                    <li key={item} className="flex gap-3 text-sm text-[var(--foreground)]">
+                      <span className="mt-0.5 text-[var(--primary)]">✓</span>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </Reveal>
+          </div>
+        </div>
+      </section>
+
+      {/* Wall of love */}
+      <section id="proof" className="border-t border-[var(--border)] bg-[var(--surface)] py-24 sm:py-28">
+        <div className="mx-auto max-w-6xl px-6">
+          <Reveal>
+            <h2 className="mb-3 text-center text-3xl font-bold tracking-tight text-[var(--foreground)] sm:text-4xl">
+              Teams that ship proof faster
+            </h2>
+            <p className="mx-auto mb-14 max-w-xl text-center text-[var(--muted)]">
+              What early users say about turning feedback into marketing assets.
+            </p>
+          </Reveal>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {wall.map((t, i) => (
+              <Reveal key={t.name} delay={i * 60}>
+                <figure className="flex h-full flex-col rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6">
+                  <blockquote className="flex-1 text-sm leading-relaxed text-[var(--muted-strong)]">
+                    “{t.quote}”
+                  </blockquote>
+                  <figcaption className="mt-5 border-t border-[var(--border)] pt-4">
+                    <div className="font-medium text-[var(--foreground)]">{t.name}</div>
+                    <div className="text-xs text-[var(--muted)]">
+                      {t.role}, {t.company}
+                    </div>
+                  </figcaption>
+                </figure>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Features */}
       <section id="features" className="py-24 sm:py-28">
         <div className="mx-auto max-w-6xl px-6">
           <Reveal>
             <div className="mx-auto mb-14 max-w-2xl text-center">
               <h2 className="mb-3 text-3xl font-bold tracking-tight text-[var(--foreground)] sm:text-4xl">
-                Everything you need to prove value
+                Your all-in-one proof engine
               </h2>
               <p className="text-[var(--muted)]">
-                One platform for proof creation, distribution, and referral growth.
+                Generate, publish, embed, and refer — without a content team bottleneck.
               </p>
             </div>
           </Reveal>
-
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {features.map((f, i) => (
-              <Reveal key={f.title} delay={i * 80}>
+              <Reveal key={f.title} delay={i * 70}>
                 <div className="group h-full rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6 transition duration-300 hover:-translate-y-1 hover:border-[var(--primary)]/40 hover:shadow-lg hover:shadow-indigo-500/5">
                   <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--badge-bg)] text-[var(--primary)]">
                     <svg
@@ -238,17 +407,21 @@ export default function Home() {
         </div>
       </section>
 
+      {/* How it works */}
       <section id="how" className="border-t border-[var(--border)] py-24 sm:py-28">
         <div className="mx-auto max-w-6xl px-6">
           <Reveal>
-            <h2 className="mb-14 text-center text-3xl font-bold tracking-tight text-[var(--foreground)] sm:text-4xl">
-              How it works
+            <h2 className="mb-3 text-center text-3xl font-bold tracking-tight text-[var(--foreground)] sm:text-4xl">
+              Start collecting & sharing proof in minutes
             </h2>
+            <p className="mx-auto mb-14 max-w-lg text-center text-[var(--muted)]">
+              Three steps. No design team. No waiting on “we’ll write the case study next quarter.”
+            </p>
           </Reveal>
           <div className="grid gap-8 md:grid-cols-3">
             {steps.map((s, i) => (
               <Reveal key={s.n} delay={i * 120}>
-                <div className="relative text-center md:text-left">
+                <div className="relative rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6 text-center md:text-left">
                   <div className="mb-4 text-sm font-semibold tracking-widest text-[var(--primary)]">
                     {s.n}
                   </div>
@@ -261,45 +434,87 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Final CTA */}
       <Reveal>
         <section className="border-t border-[var(--border)] py-24">
           <div className="mx-auto max-w-3xl px-6 text-center">
             <h2 className="mb-4 text-3xl font-bold tracking-tight text-[var(--foreground)] sm:text-4xl">
-              Ready to turn proof into growth?
+              Ready to show proof everywhere?
             </h2>
             <p className="mb-8 text-[var(--muted)]">
-              Join teams who automate social proof and let customers do the marketing.
+              Start free. Generate your first polished testimonial in under a minute.
             </p>
-            <Link
-              href="/signup"
-              className="inline-flex h-12 items-center rounded-xl bg-[var(--primary)] px-8 text-[15px] font-semibold text-white shadow-lg shadow-indigo-500/25 transition hover:opacity-90"
-            >
-              Start free →
-            </Link>
+            <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
+              <Link
+                href="/signup"
+                className="inline-flex h-12 items-center rounded-xl bg-[var(--primary)] px-8 text-[15px] font-semibold text-white shadow-lg shadow-indigo-500/25 transition hover:opacity-90"
+              >
+                Start for free today
+              </Link>
+              <Link
+                href="/pricing"
+                className="inline-flex h-12 items-center rounded-xl border border-[var(--border)] px-7 text-[15px] font-medium text-[var(--muted-strong)] transition hover:bg-[var(--surface)]"
+              >
+                See pricing
+              </Link>
+            </div>
+            <p className="mt-6 text-xs text-[var(--muted)]">No credit card required</p>
           </div>
         </section>
       </Reveal>
 
-      <footer className="border-t border-[var(--border)] py-10">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 text-sm text-[var(--muted)] sm:flex-row">
-          <div className="flex items-center gap-2">
-            <div className="flex h-6 w-6 items-center justify-center rounded-md bg-[var(--primary)] text-[10px] font-bold text-white">
-              P
+      {/* Footer */}
+      <footer className="border-t border-[var(--border)] py-12">
+        <div className="mx-auto grid max-w-6xl gap-10 px-6 sm:grid-cols-4">
+          <div className="sm:col-span-1">
+            <div className="mb-3 flex items-center gap-2">
+              <div className="flex h-7 w-7 items-center justify-center rounded-md bg-[var(--primary)] text-[10px] font-bold text-white">
+                P
+              </div>
+              <span className="font-semibold text-[var(--foreground)]">ProofLoop</span>
             </div>
-            <span className="font-medium text-[var(--muted-strong)]">ProofLoop</span>
+            <p className="text-sm text-[var(--muted)]">
+              Automated customer proof & referrals for B2B SaaS.
+            </p>
           </div>
-          <div className="flex gap-6">
-            <Link href="/pricing" className="hover:text-[var(--foreground)]">
-              Pricing
-            </Link>
-            <Link href="/dashboard" className="hover:text-[var(--foreground)]">
-              Dashboard
-            </Link>
-            <Link href="/embed" className="hover:text-[var(--foreground)]">
-              Embed
-            </Link>
+          <div>
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-[var(--muted)]">
+              Product
+            </p>
+            <div className="flex flex-col gap-2 text-sm text-[var(--muted-strong)]">
+              <Link href="/dashboard" className="hover:text-[var(--foreground)]">
+                Generator
+              </Link>
+              <Link href="/embed" className="hover:text-[var(--foreground)]">
+                Embed
+              </Link>
+              <Link href="/referrals" className="hover:text-[var(--foreground)]">
+                Referrals
+              </Link>
+              <Link href="/pricing" className="hover:text-[var(--foreground)]">
+                Pricing
+              </Link>
+            </div>
           </div>
-          <p>© 2026 ProofLoop</p>
+          <div>
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-[var(--muted)]">
+              Company
+            </p>
+            <div className="flex flex-col gap-2 text-sm text-[var(--muted-strong)]">
+              <Link href="/signup" className="hover:text-[var(--foreground)]">
+                Sign up
+              </Link>
+              <Link href="/login" className="hover:text-[var(--foreground)]">
+                Log in
+              </Link>
+            </div>
+          </div>
+          <div>
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-[var(--muted)]">
+              Legal
+            </p>
+            <p className="text-sm text-[var(--muted)]">© 2026 ProofLoop</p>
+          </div>
         </div>
       </footer>
     </div>
