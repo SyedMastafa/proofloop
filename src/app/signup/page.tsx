@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { trackReferralSignup } from "@/lib/referral";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 function SignupForm() {
   const searchParams = useSearchParams();
@@ -20,9 +21,7 @@ function SignupForm() {
     const ref = searchParams.get("ref");
     if (ref) {
       setRefCode(ref);
-      if (typeof window !== "undefined") {
-        localStorage.setItem("proofloop_ref_code", ref);
-      }
+      if (typeof window !== "undefined") localStorage.setItem("proofloop_ref_code", ref);
     }
   }, [searchParams]);
 
@@ -31,14 +30,12 @@ function SignupForm() {
     setLoading(true);
     setError("");
     setMessage("");
-
     try {
       const supabase = createClient();
       const origin =
         typeof window !== "undefined"
           ? window.location.origin
           : process.env.NEXT_PUBLIC_APP_URL || "https://proofloop-eta.vercel.app";
-
       const { error } = await supabase.auth.signUp({
         email,
         password,
@@ -47,7 +44,6 @@ function SignupForm() {
           data: { full_name: name, referral_code: refCode || undefined },
         },
       });
-
       if (error) throw error;
       trackReferralSignup(refCode || undefined);
       setMessage("Check your email for the confirmation link!");
@@ -58,44 +54,41 @@ function SignupForm() {
     }
   }
 
+  const input =
+    "w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm text-[var(--foreground)] placeholder:text-[var(--muted)] focus:border-[var(--primary)] focus:outline-none";
+
   return (
-    <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900/50 p-8">
+    <div className="w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--card)] p-8">
       <div className="mb-8 text-center">
         <Link href="/" className="inline-flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-500 text-sm font-bold text-white">P</div>
-          <span className="text-xl font-semibold text-white">ProofLoop</span>
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--primary)] text-sm font-bold text-white">P</div>
+          <span className="text-xl font-semibold text-[var(--foreground)]">ProofLoop</span>
         </Link>
-        <p className="mt-3 text-slate-400">Create your free account</p>
-        {refCode && (
-          <p className="mt-2 text-xs text-indigo-400">Referred via: {refCode}</p>
-        )}
+        <p className="mt-3 text-[var(--muted)]">Create your free account</p>
+        {refCode && <p className="mt-2 text-xs text-[var(--primary)]">Referred via: {refCode}</p>}
       </div>
-
       <form onSubmit={handleSignup} className="space-y-4">
         <div>
-          <label className="mb-1.5 block text-sm text-slate-300">Name</label>
-          <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Jane Doe" className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none" />
+          <label className="mb-1.5 block text-sm text-[var(--muted-strong)]">Name</label>
+          <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Jane Doe" className={input} />
         </div>
         <div>
-          <label className="mb-1.5 block text-sm text-slate-300">Email</label>
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="you@company.com" className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none" />
+          <label className="mb-1.5 block text-sm text-[var(--muted-strong)]">Email</label>
+          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="you@company.com" className={input} />
         </div>
         <div>
-          <label className="mb-1.5 block text-sm text-slate-300">Password</label>
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} placeholder="••••••••" className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none" />
+          <label className="mb-1.5 block text-sm text-[var(--muted-strong)]">Password</label>
+          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} placeholder="••••••••" className={input} />
         </div>
-
-        {error && <div className="rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-300">{error}</div>}
-        {message && <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300">{message}</div>}
-
-        <button type="submit" disabled={loading} className="w-full rounded-xl bg-indigo-500 py-3 text-sm font-semibold text-white hover:bg-indigo-400 disabled:opacity-50">
+        {error && <div className="rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-500">{error}</div>}
+        {message && <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-600">{message}</div>}
+        <button type="submit" disabled={loading} className="w-full rounded-xl bg-[var(--primary)] py-3 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50">
           {loading ? "Creating account..." : "Create account"}
         </button>
       </form>
-
-      <p className="mt-6 text-center text-sm text-slate-500">
+      <p className="mt-6 text-center text-sm text-[var(--muted)]">
         Already have an account?{" "}
-        <Link href="/login" className="text-indigo-400 hover:underline">Log in</Link>
+        <Link href="/login" className="text-[var(--primary)] hover:underline">Log in</Link>
       </p>
     </div>
   );
@@ -103,8 +96,11 @@ function SignupForm() {
 
 export default function SignupPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-950 px-6">
-      <Suspense fallback={<div className="text-slate-400">Loading...</div>}>
+    <div className="relative flex min-h-screen items-center justify-center bg-[var(--background)] px-6">
+      <div className="absolute right-4 top-4">
+        <ThemeToggle />
+      </div>
+      <Suspense fallback={<div className="text-[var(--muted)]">Loading...</div>}>
         <SignupForm />
       </Suspense>
     </div>
