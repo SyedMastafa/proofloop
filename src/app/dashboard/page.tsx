@@ -3,9 +3,15 @@
 import { useState } from "react";
 import Link from "next/link";
 import { saveStory } from "@/lib/storage";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { AppHeader } from "@/components/app-header";
 
 type Tab = "testimonial" | "case-study" | "social";
+
+const tabs: { id: Tab; label: string; hint: string }[] = [
+  { id: "testimonial", label: "Testimonial", hint: "Polish raw feedback into a quote sales can use" },
+  { id: "case-study", label: "Case study", hint: "Structure Challenge → Solution → Results" },
+  { id: "social", label: "Social posts", hint: "Turn a win into LinkedIn & X drafts" },
+];
 
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState<Tab>("testimonial");
@@ -84,177 +90,272 @@ export default function DashboardPage() {
   }
 
   const inputClass =
-    "w-full rounded-xl border border-[var(--border)] bg-[var(--card)] px-4 py-3 text-sm text-[var(--foreground)] placeholder:text-[var(--muted)] focus:border-[var(--primary)] focus:outline-none";
+    "w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm text-[var(--foreground)] placeholder:text-[var(--muted)] focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20";
+
+  const activeHint = tabs.find((t) => t.id === activeTab)?.hint;
 
   return (
     <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
-      <header className="border-b border-[var(--border)] bg-[var(--nav-bg)] backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--primary)] text-sm font-bold text-white">
-              P
-            </div>
-            <span className="text-lg font-semibold">ProofLoop</span>
-          </Link>
-          <div className="flex items-center gap-3 text-sm">
-            <Link href="/stories" className="text-[var(--muted)] hover:text-[var(--foreground)]">
-              My Stories
-            </Link>
-            <Link href="/embed" className="text-[var(--muted)] hover:text-[var(--foreground)]">
-              Embed
-            </Link>
-            <Link href="/referrals" className="text-[var(--muted)] hover:text-[var(--foreground)]">
-              Referrals
-            </Link>
-            <ThemeToggle />
+      <AppHeader
+        links={[
+          { href: "/dashboard", label: "Generator" },
+          { href: "/stories", label: "Stories" },
+          { href: "/embed", label: "Embed" },
+          { href: "/referrals", label: "Referrals" },
+          { href: "/pricing", label: "Pricing" },
+        ]}
+      />
+
+      <main className="mx-auto max-w-5xl px-6 py-10">
+        {/* Page intro */}
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-[var(--foreground)] sm:text-3xl">
+              AI Proof Generator
+            </h1>
+            <p className="mt-1 text-[var(--muted)]">
+              Turn raw feedback into assets your sales and marketing team can ship today.
+            </p>
           </div>
+          <Link
+            href="/stories"
+            className="inline-flex h-10 items-center rounded-xl border border-[var(--border)] px-4 text-sm font-medium text-[var(--muted-strong)] hover:bg-[var(--surface)]"
+          >
+            View stories →
+          </Link>
         </div>
-      </header>
 
-      <main className="mx-auto max-w-4xl px-6 py-10">
-        <h1 className="mb-2 text-2xl font-bold text-[var(--foreground)]">AI Proof Generator</h1>
-        <p className="mb-8 text-[var(--muted)]">
-          Polish testimonials, generate case studies, create social posts with Gemini.
-        </p>
-
-        <div className="mb-8 flex gap-2 border-b border-[var(--border)]">
-          {(["testimonial", "case-study", "social"] as const).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => {
-                setActiveTab(tab);
-                setResult("");
-                setError("");
-                setSavedId(null);
-              }}
-              className={`-mb-px border-b-2 px-4 py-2.5 text-sm font-medium ${
-                activeTab === tab
-                  ? "border-[var(--primary)] text-[var(--primary)]"
-                  : "border-transparent text-[var(--muted)]"
-              }`}
+        {/* Quick tips */}
+        <div className="mb-8 grid gap-3 sm:grid-cols-3">
+          {[
+            { t: "Paste real words", d: "Support notes & call snippets work best" },
+            { t: "Add metrics", d: "Numbers make testimonials convert" },
+            { t: "Save & share", d: "Public page + embed in one click" },
+          ].map((x) => (
+            <div
+              key={x.t}
+              className="rounded-xl border border-[var(--border)] bg-[var(--card)] px-4 py-3"
             >
-              {tab === "testimonial"
-                ? "Testimonial"
-                : tab === "case-study"
-                ? "Case Study"
-                : "Social"}
-            </button>
+              <p className="text-sm font-medium text-[var(--foreground)]">{x.t}</p>
+              <p className="text-xs text-[var(--muted)]">{x.d}</p>
+            </div>
           ))}
         </div>
 
-        <div className="space-y-4">
-          {activeTab === "testimonial" && (
-            <>
-              <textarea
-                value={rawFeedback}
-                onChange={(e) => setRawFeedback(e.target.value)}
-                rows={4}
-                placeholder="Raw customer feedback..."
-                className={inputClass}
-              />
-              <input
-                value={companyName}
-                onChange={(e) => setCompanyName(e.target.value)}
-                placeholder="Company name (optional)"
-                className={inputClass}
-              />
-            </>
-          )}
-          {activeTab === "case-study" && (
-            <>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <input
-                  value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
-                  placeholder="Customer name"
-                  className={inputClass}
-                />
-                <input
-                  value={csCompany}
-                  onChange={(e) => setCsCompany(e.target.value)}
-                  placeholder="Their company"
-                  className={inputClass}
-                />
+        <div className="grid gap-6 lg:grid-cols-5">
+          {/* Input panel */}
+          <div className="lg:col-span-3">
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6">
+              <div className="mb-6 flex flex-wrap gap-2">
+                {tabs.map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => {
+                      setActiveTab(tab.id);
+                      setResult("");
+                      setError("");
+                      setSavedId(null);
+                    }}
+                    className={`rounded-full px-4 py-2 text-sm font-medium transition ${
+                      activeTab === tab.id
+                        ? "bg-[var(--primary)] text-white"
+                        : "border border-[var(--border)] text-[var(--muted)] hover:text-[var(--foreground)]"
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
               </div>
-              <textarea
-                value={challenge}
-                onChange={(e) => setChallenge(e.target.value)}
-                rows={2}
-                placeholder="Challenge"
-                className={inputClass}
-              />
-              <textarea
-                value={solution}
-                onChange={(e) => setSolution(e.target.value)}
-                rows={2}
-                placeholder="Solution"
-                className={inputClass}
-              />
-              <textarea
-                value={results}
-                onChange={(e) => setResults(e.target.value)}
-                rows={2}
-                placeholder="Results"
-                className={inputClass}
-              />
-            </>
-          )}
-          {activeTab === "social" && (
-            <textarea
-              value={socialContent}
-              onChange={(e) => setSocialContent(e.target.value)}
-              rows={6}
-              placeholder="Paste testimonial or case study..."
-              className={inputClass}
-            />
-          )}
-          <button
-            onClick={handleGenerate}
-            disabled={loading}
-            className="rounded-xl bg-[var(--primary)] px-6 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
-          >
-            {loading ? "Generating..." : "Generate →"}
-          </button>
-        </div>
+              <p className="mb-4 text-sm text-[var(--muted)]">{activeHint}</p>
 
-        {error && (
-          <div className="mt-6 rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-500">
-            {error}
-          </div>
-        )}
+              <div className="space-y-4">
+                {activeTab === "testimonial" && (
+                  <>
+                    <div>
+                      <label className="mb-1.5 block text-xs font-medium text-[var(--muted)]">
+                        Raw feedback
+                      </label>
+                      <textarea
+                        value={rawFeedback}
+                        onChange={(e) => setRawFeedback(e.target.value)}
+                        rows={5}
+                        placeholder="Paste what the customer said…"
+                        className={inputClass}
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1.5 block text-xs font-medium text-[var(--muted)]">
+                        Company (optional)
+                      </label>
+                      <input
+                        value={companyName}
+                        onChange={(e) => setCompanyName(e.target.value)}
+                        placeholder="Acme Inc."
+                        className={inputClass}
+                      />
+                    </div>
+                  </>
+                )}
+                {activeTab === "case-study" && (
+                  <>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div>
+                        <label className="mb-1.5 block text-xs font-medium text-[var(--muted)]">
+                          Customer name
+                        </label>
+                        <input
+                          value={customerName}
+                          onChange={(e) => setCustomerName(e.target.value)}
+                          placeholder="Jane Doe"
+                          className={inputClass}
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-1.5 block text-xs font-medium text-[var(--muted)]">
+                          Their company
+                        </label>
+                        <input
+                          value={csCompany}
+                          onChange={(e) => setCsCompany(e.target.value)}
+                          placeholder="Acme Inc."
+                          className={inputClass}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="mb-1.5 block text-xs font-medium text-[var(--muted)]">
+                        Challenge
+                      </label>
+                      <textarea
+                        value={challenge}
+                        onChange={(e) => setChallenge(e.target.value)}
+                        rows={2}
+                        placeholder="What problem did they face?"
+                        className={inputClass}
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1.5 block text-xs font-medium text-[var(--muted)]">
+                        Solution
+                      </label>
+                      <textarea
+                        value={solution}
+                        onChange={(e) => setSolution(e.target.value)}
+                        rows={2}
+                        placeholder="How did you help?"
+                        className={inputClass}
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1.5 block text-xs font-medium text-[var(--muted)]">
+                        Results
+                      </label>
+                      <textarea
+                        value={results}
+                        onChange={(e) => setResults(e.target.value)}
+                        rows={2}
+                        placeholder="Metrics, outcomes…"
+                        className={inputClass}
+                      />
+                    </div>
+                  </>
+                )}
+                {activeTab === "social" && (
+                  <div>
+                    <label className="mb-1.5 block text-xs font-medium text-[var(--muted)]">
+                      Source content
+                    </label>
+                    <textarea
+                      value={socialContent}
+                      onChange={(e) => setSocialContent(e.target.value)}
+                      rows={7}
+                      placeholder="Paste a testimonial or case study…"
+                      className={inputClass}
+                    />
+                  </div>
+                )}
 
-        {result && (
-          <div className="mt-8">
-            <div className="mb-3 flex justify-between">
-              <h2 className="text-lg font-semibold text-[var(--foreground)]">Result</h2>
-              <div className="flex gap-2">
                 <button
-                  onClick={() => navigator.clipboard.writeText(result)}
-                  className="rounded-lg border border-[var(--border)] px-3 py-1.5 text-xs text-[var(--muted)]"
+                  onClick={handleGenerate}
+                  disabled={loading}
+                  className="inline-flex h-12 w-full items-center justify-center rounded-xl bg-[var(--primary)] text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50 sm:w-auto sm:px-8"
                 >
-                  Copy
-                </button>
-                <button
-                  onClick={handleSave}
-                  className="rounded-lg border border-[var(--primary)]/40 bg-[var(--badge-bg)] px-3 py-1.5 text-xs text-[var(--primary)]"
-                >
-                  {savedId ? "Saved ✓" : "Save"}
+                  {loading ? (
+                    <span className="flex items-center gap-2">
+                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                      Generating…
+                    </span>
+                  ) : (
+                    "Generate with AI →"
+                  )}
                 </button>
               </div>
+
+              {error && (
+                <div className="mt-4 rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-500">
+                  {error}
+                </div>
+              )}
             </div>
-            <pre className="whitespace-pre-wrap rounded-xl border border-[var(--border)] bg-[var(--card)] p-5 text-sm text-[var(--foreground)]">
-              {result}
-            </pre>
-            {savedId && (
-              <p className="mt-4 text-sm text-emerald-600">
-                Saved!{" "}
-                <Link href={`/p/${savedId}`} className="underline">
-                  View public page →
-                </Link>
-              </p>
-            )}
           </div>
-        )}
+
+          {/* Output panel */}
+          <div className="lg:col-span-2">
+            <div className="sticky top-24 rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6">
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-[var(--foreground)]">Output</h2>
+                {result && (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => navigator.clipboard.writeText(result)}
+                      className="rounded-lg border border-[var(--border)] px-2.5 py-1 text-xs text-[var(--muted)] hover:bg-[var(--surface)]"
+                    >
+                      Copy
+                    </button>
+                    <button
+                      onClick={handleSave}
+                      className="rounded-lg border border-[var(--primary)]/40 bg-[var(--badge-bg)] px-2.5 py-1 text-xs text-[var(--primary)]"
+                    >
+                      {savedId ? "Saved ✓" : "Save"}
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {!result && !loading && (
+                <div className="flex min-h-[220px] flex-col items-center justify-center rounded-xl border border-dashed border-[var(--border)] bg-[var(--surface)] px-4 text-center">
+                  <p className="text-sm font-medium text-[var(--muted-strong)]">No output yet</p>
+                  <p className="mt-1 text-xs text-[var(--muted)]">
+                    Fill the form and generate — result appears here.
+                  </p>
+                </div>
+              )}
+
+              {loading && (
+                <div className="flex min-h-[220px] flex-col items-center justify-center gap-3">
+                  <span className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--primary)]/30 border-t-[var(--primary)]" />
+                  <p className="text-sm text-[var(--muted)]">Gemini is polishing…</p>
+                </div>
+              )}
+
+              {result && !loading && (
+                <>
+                  <pre className="max-h-[420px] overflow-y-auto whitespace-pre-wrap rounded-xl border border-[var(--border)] bg-[var(--background)] p-4 text-sm leading-relaxed text-[var(--foreground)]">
+                    {result}
+                  </pre>
+                  {savedId && (
+                    <p className="mt-4 text-sm text-emerald-600">
+                      Saved!{" "}
+                      <Link href={`/p/${savedId}`} className="font-medium underline">
+                        Open public page →
+                      </Link>
+                    </p>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        </div>
       </main>
     </div>
   );
