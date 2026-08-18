@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const features = [
   {
@@ -41,28 +42,28 @@ const steps = [
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-[#030712] text-slate-100">
-      {/* Nav */}
-      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/[0.06] bg-[#030712]/80 backdrop-blur-xl">
+    <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
+      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-[var(--border)] bg-[var(--nav-bg)] backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
           <Link href="/" className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500 text-sm font-bold text-white shadow-lg shadow-indigo-500/30">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--primary)] text-sm font-bold text-white shadow-lg shadow-indigo-500/30">
               P
             </div>
             <span className="text-[15px] font-semibold tracking-tight">ProofLoop</span>
           </Link>
-          <div className="hidden items-center gap-8 text-sm text-slate-400 md:flex">
-            <a href="#features" className="transition hover:text-white">Features</a>
-            <a href="#how" className="transition hover:text-white">How it works</a>
-            <Link href="/pricing" className="transition hover:text-white">Pricing</Link>
+          <div className="hidden items-center gap-8 text-sm text-[var(--muted)] md:flex">
+            <a href="#features" className="transition hover:text-[var(--foreground)]">Features</a>
+            <a href="#how" className="transition hover:text-[var(--foreground)]">How it works</a>
+            <Link href="/pricing" className="transition hover:text-[var(--foreground)]">Pricing</Link>
           </div>
           <div className="flex items-center gap-2">
-            <Link href="/login" className="rounded-lg px-3 py-2 text-sm text-slate-400 transition hover:text-white">
+            <ThemeToggle />
+            <Link href="/login" className="rounded-lg px-3 py-2 text-sm text-[var(--muted)] transition hover:text-[var(--foreground)]">
               Log in
             </Link>
             <Link
               href="/signup"
-              className="rounded-lg bg-indigo-500 px-4 py-2 text-sm font-medium text-white shadow-md shadow-indigo-500/20 transition hover:bg-indigo-400"
+              className="rounded-lg bg-[var(--primary)] px-4 py-2 text-sm font-medium text-white shadow-md shadow-indigo-500/20 transition hover:opacity-90"
             >
               Get started free
             </Link>
@@ -70,69 +71,80 @@ export default function Home() {
         </div>
       </nav>
 
-      {/* Hero */}
       <section className="relative overflow-hidden pt-28 pb-20 sm:pt-36 sm:pb-28">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(99,102,241,0.22),transparent)]" />
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_80%_60%,rgba(34,211,238,0.06),transparent_40%)]" />
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(ellipse 80% 50% at 50% -20%, var(--hero-glow), transparent)",
+          }}
+        />
         <div className="relative mx-auto max-w-4xl px-6 text-center">
-          <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-indigo-500/25 bg-indigo-500/10 px-3.5 py-1.5 text-xs font-medium text-indigo-300">
+          <div
+            className="mb-8 inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-xs font-medium"
+            style={{
+              borderColor: "var(--badge-border)",
+              background: "var(--badge-bg)",
+              color: "var(--badge-text)",
+            }}
+          >
             <span className="relative flex h-1.5 w-1.5">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-indigo-400 opacity-60" />
-              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-indigo-400" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-indigo-500" />
             </span>
             AI-powered customer proof for SaaS
           </div>
-          <h1 className="mb-6 text-4xl font-bold tracking-tight text-white sm:text-6xl sm:leading-[1.08]">
+          <h1 className="mb-6 text-4xl font-bold tracking-tight text-[var(--foreground)] sm:text-6xl sm:leading-[1.08]">
             Turn customer success
             <br />
-            <span className="bg-gradient-to-r from-indigo-400 via-violet-400 to-cyan-400 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-indigo-500 via-violet-500 to-cyan-500 bg-clip-text text-transparent">
               into marketing machines
             </span>
           </h1>
-          <p className="mx-auto mb-10 max-w-2xl text-base leading-relaxed text-slate-400 sm:text-lg">
+          <p className="mx-auto mb-10 max-w-2xl text-base leading-relaxed text-[var(--muted)] sm:text-lg">
             Automatically generate testimonials, case studies, embeds, and referral links from
             real customer feedback — with near-zero marketing effort.
           </p>
           <div className="flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
             <Link
               href="/dashboard"
-              className="inline-flex h-12 items-center rounded-xl bg-indigo-500 px-7 text-[15px] font-semibold text-white shadow-lg shadow-indigo-500/25 transition hover:bg-indigo-400"
+              className="inline-flex h-12 items-center rounded-xl bg-[var(--primary)] px-7 text-[15px] font-semibold text-white shadow-lg shadow-indigo-500/25 transition hover:opacity-90"
             >
               Open Generator →
             </Link>
             <Link
               href="/pricing"
-              className="inline-flex h-12 items-center rounded-xl border border-white/10 bg-white/[0.03] px-7 text-[15px] font-medium text-slate-300 transition hover:border-white/20 hover:bg-white/[0.06]"
+              className="inline-flex h-12 items-center rounded-xl border border-[var(--border)] bg-[var(--surface)] px-7 text-[15px] font-medium text-[var(--muted-strong)] transition hover:bg-[var(--surface-hover)]"
             >
               View pricing
             </Link>
           </div>
-          <p className="mt-6 text-xs text-slate-500">Free plan · No credit card · Built-in product-led growth</p>
+          <p className="mt-6 text-xs text-[var(--muted)]">
+            Free plan · No credit card · Built-in product-led growth
+          </p>
         </div>
       </section>
 
-      {/* Social proof strip */}
-      <section className="border-y border-white/[0.05] bg-white/[0.015] py-8">
+      <section className="border-y border-[var(--border)] bg-[var(--surface)] py-8">
         <div className="mx-auto max-w-6xl px-6">
-          <p className="mb-5 text-center text-xs font-medium uppercase tracking-widest text-slate-500">
+          <p className="mb-5 text-center text-xs font-medium uppercase tracking-widest text-[var(--muted)]">
             Built for modern SaaS teams
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-3 text-sm text-slate-500">
+          <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-3 text-sm text-[var(--muted)]">
             {["Product-led growth", "Customer success", "Sales enablement", "Agencies"].map((t) => (
-              <span key={t} className="font-medium text-slate-400">{t}</span>
+              <span key={t} className="font-medium text-[var(--muted-strong)]">{t}</span>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Features */}
       <section id="features" className="py-24 sm:py-28">
         <div className="mx-auto max-w-6xl px-6">
           <div className="mx-auto mb-14 max-w-2xl text-center">
-            <h2 className="mb-3 text-3xl font-bold tracking-tight text-white sm:text-4xl">
+            <h2 className="mb-3 text-3xl font-bold tracking-tight text-[var(--foreground)] sm:text-4xl">
               Everything you need to prove value
             </h2>
-            <p className="text-slate-400">
+            <p className="text-[var(--muted)]">
               One platform for proof creation, distribution, and referral growth.
             </p>
           </div>
@@ -140,68 +152,65 @@ export default function Home() {
             {features.map((f) => (
               <div
                 key={f.title}
-                className="group rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 transition hover:border-indigo-500/30 hover:bg-white/[0.04]"
+                className="group rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6 transition hover:border-[var(--primary)]/40"
               >
-                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-500/10 text-lg">
+                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--badge-bg)] text-lg">
                   {f.icon}
                 </div>
-                <h3 className="mb-2 text-[15px] font-semibold text-white">{f.title}</h3>
-                <p className="text-sm leading-relaxed text-slate-400">{f.desc}</p>
+                <h3 className="mb-2 text-[15px] font-semibold text-[var(--foreground)]">{f.title}</h3>
+                <p className="text-sm leading-relaxed text-[var(--muted)]">{f.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* How it works */}
-      <section id="how" className="border-t border-white/[0.05] py-24 sm:py-28">
+      <section id="how" className="border-t border-[var(--border)] py-24 sm:py-28">
         <div className="mx-auto max-w-6xl px-6">
-          <h2 className="mb-14 text-center text-3xl font-bold tracking-tight text-white sm:text-4xl">
+          <h2 className="mb-14 text-center text-3xl font-bold tracking-tight text-[var(--foreground)] sm:text-4xl">
             How it works
           </h2>
           <div className="grid gap-8 md:grid-cols-3">
             {steps.map((s) => (
               <div key={s.n} className="relative text-center md:text-left">
-                <div className="mb-4 text-sm font-semibold tracking-widest text-indigo-400">{s.n}</div>
-                <h3 className="mb-2 text-lg font-semibold text-white">{s.t}</h3>
-                <p className="text-sm text-slate-400">{s.d}</p>
+                <div className="mb-4 text-sm font-semibold tracking-widest text-[var(--primary)]">{s.n}</div>
+                <h3 className="mb-2 text-lg font-semibold text-[var(--foreground)]">{s.t}</h3>
+                <p className="text-sm text-[var(--muted)]">{s.d}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* CTA band */}
-      <section className="border-t border-white/[0.05] py-24">
+      <section className="border-t border-[var(--border)] py-24">
         <div className="mx-auto max-w-3xl px-6 text-center">
-          <h2 className="mb-4 text-3xl font-bold tracking-tight text-white sm:text-4xl">
+          <h2 className="mb-4 text-3xl font-bold tracking-tight text-[var(--foreground)] sm:text-4xl">
             Ready to turn proof into growth?
           </h2>
-          <p className="mb-8 text-slate-400">
+          <p className="mb-8 text-[var(--muted)]">
             Join teams who automate social proof and let customers do the marketing.
           </p>
           <Link
             href="/signup"
-            className="inline-flex h-12 items-center rounded-xl bg-indigo-500 px-8 text-[15px] font-semibold text-white shadow-lg shadow-indigo-500/25 transition hover:bg-indigo-400"
+            className="inline-flex h-12 items-center rounded-xl bg-[var(--primary)] px-8 text-[15px] font-semibold text-white shadow-lg shadow-indigo-500/25 transition hover:opacity-90"
           >
             Start free →
           </Link>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-white/[0.05] py-10">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 text-sm text-slate-500 sm:flex-row">
+      <footer className="border-t border-[var(--border)] py-10">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 text-sm text-[var(--muted)] sm:flex-row">
           <div className="flex items-center gap-2">
-            <div className="flex h-6 w-6 items-center justify-center rounded-md bg-indigo-500 text-[10px] font-bold text-white">
+            <div className="flex h-6 w-6 items-center justify-center rounded-md bg-[var(--primary)] text-[10px] font-bold text-white">
               P
             </div>
-            <span className="font-medium text-slate-400">ProofLoop</span>
+            <span className="font-medium text-[var(--muted-strong)]">ProofLoop</span>
           </div>
           <div className="flex gap-6">
-            <Link href="/pricing" className="hover:text-slate-300">Pricing</Link>
-            <Link href="/dashboard" className="hover:text-slate-300">Dashboard</Link>
-            <Link href="/embed" className="hover:text-slate-300">Embed</Link>
+            <Link href="/pricing" className="hover:text-[var(--foreground)]">Pricing</Link>
+            <Link href="/dashboard" className="hover:text-[var(--foreground)]">Dashboard</Link>
+            <Link href="/embed" className="hover:text-[var(--foreground)]">Embed</Link>
           </div>
           <p>© 2026 ProofLoop</p>
         </div>
