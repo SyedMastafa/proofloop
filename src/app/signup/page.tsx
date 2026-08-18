@@ -34,10 +34,16 @@ function SignupForm() {
 
     try {
       const supabase = createClient();
+      const origin =
+        typeof window !== "undefined"
+          ? window.location.origin
+          : process.env.NEXT_PUBLIC_APP_URL || "https://proofloop-eta.vercel.app";
+
       const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
+          emailRedirectTo: `${origin}/auth/callback?next=/dashboard`,
           data: { full_name: name, referral_code: refCode || undefined },
         },
       });
