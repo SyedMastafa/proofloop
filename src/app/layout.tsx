@@ -5,12 +5,21 @@ import "./globals.css";
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "ProofLoop — Automated Customer Proof & Referral Platform",
+  title: {
+    default: "ProofLoop — Turn Customer Success into Marketing",
+    template: "%s · ProofLoop",
+  },
   description:
-    "Turn your customers' success stories into automated marketing machines. AI-powered testimonials, case studies, ROI calculators & referrals for SaaS companies.",
+    "AI-powered testimonials, case studies, embeds & referrals for B2B SaaS. Product-led growth with built-in branding.",
+  openGraph: {
+    title: "ProofLoop",
+    description: "Automated customer proof & referral platform for SaaS.",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
@@ -20,7 +29,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${inter.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col bg-slate-950 text-slate-100 font-sans">
+      <body className="min-h-full flex flex-col bg-[#030712] text-slate-100 font-sans">
         {children}
       </body>
     </html>
