@@ -108,3 +108,41 @@ TWITTER:
   const response = await result.response;
   return response.text().trim();
 }
+
+/** Phase 1 AI sales / marketing agent for ProofLoop itself */
+export async function runSalesAgent(goal: string, context?: string) {
+  const model = genAI.getGenerativeModel({ model: MODEL });
+
+  const prompt = `
+You are the in-house AI sales & marketing agent for ProofLoop.
+
+Product: ProofLoop — AI-powered customer proof for B2B SaaS.
+- Polish raw feedback into testimonials
+- Generate case studies (Challenge → Solution → Results)
+- Public success pages with "Powered by ProofLoop" (product-led growth)
+- Embed widgets + referral links
+- Social post drafts (LinkedIn / X)
+
+Positioning vs competitors (Senja, Testimonial.to):
+- They collect & display reviews; ProofLoop manufactures polished proof from feedback teams already have, then distributes it.
+
+Tone: concise, credible B2B SaaS. No fake metrics or logos. No spammy hype.
+
+User goal:
+"""
+${goal}
+"""
+
+${context ? `Extra context:\n"""\n${context}\n"""` : ""}
+
+Respond with practical, ready-to-use drafts. Use clear section headings.
+If writing emails: include Subject + Body.
+If writing sequences: Day 0 / Day 3 / Day 7 etc.
+If writing social: separate LinkedIn and X.
+End with 3 short "Next actions" the founder should take.
+`;
+
+  const result = await model.generateContent(prompt);
+  const response = await result.response;
+  return response.text().trim();
+}
