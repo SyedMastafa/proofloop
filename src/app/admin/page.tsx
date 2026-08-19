@@ -8,20 +8,9 @@ type Metrics = {
   storyCount: number;
   storiesLast7: number;
   typeBreakdown: Record<string, number>;
-  recentStories: {
-    id: string;
-    title: string;
-    type: string;
-    created_at: string;
-    user_id: string;
-  }[];
+  recentStories: { id: string; title: string; type: string; created_at: string }[];
   userCount: number | null;
-  users: {
-    id: string;
-    email?: string;
-    created_at: string;
-    last_sign_in_at?: string | null;
-  }[];
+  users: { id: string; email?: string; created_at: string; last_sign_in_at?: string | null }[];
   hasServiceRole: boolean;
   adminEmail: string;
 };
@@ -34,23 +23,50 @@ type Lead = {
   stage: string;
   last_event: string | null;
   last_seen_at: string;
-  created_at: string;
 };
 
 type Task = {
   id: string;
-  lead_id: string | null;
-  type: string;
   status: string;
   subject: string | null;
   body: string;
   to_email: string | null;
   error: string | null;
   created_at: string;
-  sent_at: string | null;
 };
 
-type Tab = "overview" | "leads" | "queue" | "agent";
+type Sequence = {
+  id: string;
+  name: string;
+  description: string | null;
+  is_active: boolean;
+  sequence_steps?: { step_order: number; delay_days: number; subject: string }[];
+};
+
+type Enrollment = {
+  id: string;
+  status: string;
+  current_step: number;
+  next_run_at: string;
+  leads?: { email: string } | null;
+};
+
+type Campaign = {
+  id: string;
+  title: string;
+  channel: string;
+  body: string;
+  status: string;
+  created_at: string;
+};
+
+type Tab =
+  | "overview"
+  | "leads"
+  | "queue"
+  | "sequences"
+  | "campaigns"
+  | "agent";
 
 const presets = [
   "Write a 3-email onboarding sequence for new free users who haven't created a story yet",
@@ -60,6 +76,8 @@ const presets = [
   "Reply to: 'How are you different from Senja?'",
 ];
 
+const STAGES = ["new", "nurture", "qualified", "won", "lost"] as const;
+
 export default function AdminPage() {
   const [tab, setTab] = useState<Tab>("overview");
   const [metrics, setMetrics] = useState<Metrics | null>(null);
@@ -68,7 +86,10 @@ export default function AdminPage() {
 
   const [leads, setLeads] = useState<Lead[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [leadsWarning, setLeadsWarning] = useState("");
+  const [sequences, setSequences] = useState<Sequence[]>([]);
+  const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [warning, setWarning] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
 
   const [goal, setGoal] = useState(presets[0]);
@@ -86,7 +107,7 @@ export default function AdminPage() {
       setMetrics(data);
       setLoadError("");
     } catch (e: unknown) {
-      setLoadError(e instanceof Error ? e.message : "Failed to load");
+      setLoadError(e instanceof Error ? e.message : "Failed");
     } finally {
       setLoading(false);
     }
@@ -97,7 +118,7 @@ export default function AdminPage() {
     const data = await res.json();
     if (res.ok) {
       setLeads(data.leads || []);
-      setLeadsWarning(data.warning || "");
+      setWarning(data.warning || "");
     }
   }, []);
 
@@ -107,6 +128,25 @@ export default function AdminPage() {
     if (res.ok) setTasks(data.tasks || []);
   }, []);
 
+  const loadSequences = useCallback(async () => {
+    const res = await fetch("/api/admin/sequences");
+    const data = await res.json();
+    if (res.ok) {
+      setSequences(data.sequences || []);
+      setEnrollments(data.enrollments || []);
+      setWarning(data.warning || "");
+    }
+  }, []);
+
+  const loadCampaigns = useCallback(async () => {
+    const res = await fetch("/api/admin/campaigns");
+    const data = await res.json();
+    if (res.ok) {
+      setCampaigns(data.campaigns || []);
+      setWarning(data.warning || "");
+    }
+  }, []);
+
   useEffect(() => {
     loadMetrics();
   }, [loadMetrics]);
@@ -114,7 +154,9 @@ export default function AdminPage() {
   useEffect(() => {
     if (tab === "leads") loadLeads();
     if (tab === "queue") loadTasks();
-  }, [tab, loadLeads, loadTasks]);
+    if (tab === "sequences") loadSequences();
+    if (tab === "campaigns") loadCampaigns();
+  }, [tab, loadLeads, loadTasks, loadSequences, loadCampaigns]);
 
   async function runAgent() {
     setAgentLoading(true);
@@ -130,7 +172,7 @@ export default function AdminPage() {
       if (!res.ok) throw new Error(data.error || "Failed");
       setAgentOut(data.result);
     } catch (e: unknown) {
-      setAgentError(e instanceof Error ? e.message : "Agent error");
+      setAgentError(e instanceof Error ? e.message : "Error");
     } finally {
       setAgentLoading(false);
     }
@@ -145,7 +187,7 @@ export default function AdminPage() {
         body: JSON.stringify({ action: "draft_for_lead", leadId }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Draft failed");
+      if (!res.ok) throw new Error(data.error || "Failed");
       setTab("queue");
       await loadTasks();
     } catch (e: unknown) {
@@ -177,10 +219,49 @@ export default function AdminPage() {
     }
   }
 
+  async function seqAction(payload: Record<string, unknown>) {
+    setBusyId(String(payload.sequenceId || payload.leadId || payload.enrollmentId || "x"));
+    try {
+      const res = await fetch("/api/admin/sequences", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed");
+      await loadSequences();
+      if (payload.action === "set_lead_stage") await loadLeads();
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : "Failed");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function campaignAction(payload: Record<string, unknown>) {
+    setBusyId("camp");
+    try {
+      const res = await fetch("/api/admin/campaigns", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed");
+      await loadCampaigns();
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : "Failed");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   const tabs: { id: Tab; label: string }[] = [
     { id: "overview", label: "Overview" },
     { id: "leads", label: "Leads" },
-    { id: "queue", label: "Approve queue" },
+    { id: "queue", label: "Queue" },
+    { id: "sequences", label: "Sequences" },
+    { id: "campaigns", label: "Campaigns" },
     { id: "agent", label: "Agent" },
   ];
 
@@ -198,11 +279,11 @@ export default function AdminPage() {
       <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
         <div className="mb-6">
           <p className="text-xs font-medium uppercase tracking-wider text-[var(--primary)]">
-            Phase 2
+            Phase 3 + 4 ready
           </p>
           <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Admin dashboard</h1>
           <p className="mt-1 text-sm text-[var(--muted)]">
-            Leads, scoring, approve-to-send queue, AI drafts.
+            Sequences (cron), campaigns, CRM stages, approve queue, AI agent.
           </p>
         </div>
 
@@ -223,244 +304,306 @@ export default function AdminPage() {
           ))}
         </div>
 
+        {loadError && (
+          <div className="mb-6 rounded-2xl border border-amber-500/40 bg-amber-500/10 p-6 text-sm">
+            <p className="font-medium text-amber-700 dark:text-amber-400">{loadError}</p>
+            <Link href="/login" className="mt-3 inline-block text-[var(--primary)] underline">
+              Login →
+            </Link>
+          </div>
+        )}
+
+        {warning && (
+          <p className="mb-4 text-xs text-amber-600">{warning}</p>
+        )}
+
         {loading && tab === "overview" && (
           <div className="flex justify-center py-20">
             <span className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--primary)]/30 border-t-[var(--primary)]" />
           </div>
         )}
 
-        {loadError && (
-          <div className="rounded-2xl border border-amber-500/40 bg-amber-500/10 p-6 text-sm">
-            <p className="font-medium text-amber-700 dark:text-amber-400">{loadError}</p>
-            <p className="mt-2 text-[var(--muted)]">
-              Set <code className="text-xs">ADMIN_EMAILS</code> to your login email on Vercel.
-            </p>
-            <Link href="/login" className="mt-4 inline-block text-[var(--primary)] underline">
-              Go to login →
-            </Link>
-          </div>
-        )}
-
-        {/* OVERVIEW */}
         {metrics && tab === "overview" && (
-          <>
-            <div className="mb-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {[
-                { label: "Stories total", value: metrics.storyCount },
-                { label: "Stories (7d)", value: metrics.storiesLast7 },
-                {
-                  label: "Users",
-                  value:
-                    metrics.userCount === null
-                      ? "—"
-                      : metrics.userCount >= 50
-                      ? `${metrics.userCount}+`
-                      : metrics.userCount,
-                },
-                { label: "Admin", value: metrics.adminEmail?.split("@")[0] || "—" },
-              ].map((k) => (
-                <div
-                  key={k.label}
-                  className="rounded-2xl border border-[var(--border)] bg-[var(--card)] px-4 py-4"
-                >
-                  <p className="text-xs font-medium uppercase tracking-wider text-[var(--muted)]">
-                    {k.label}
-                  </p>
-                  <p className="mt-1 truncate text-2xl font-bold">{k.value}</p>
-                </div>
-              ))}
-            </div>
-
-            {!metrics.hasServiceRole && (
-              <div className="mb-6 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-xs text-[var(--muted)]">
-                Add <code>SUPABASE_SERVICE_ROLE_KEY</code> for users, leads, and queue.
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              { label: "Stories", value: metrics.storyCount },
+              { label: "Stories 7d", value: metrics.storiesLast7 },
+              {
+                label: "Users",
+                value: metrics.userCount ?? "—",
+              },
+              { label: "Admin", value: metrics.adminEmail?.split("@")[0] },
+            ].map((k) => (
+              <div
+                key={k.label}
+                className="rounded-2xl border border-[var(--border)] bg-[var(--card)] px-4 py-4"
+              >
+                <p className="text-xs uppercase tracking-wider text-[var(--muted)]">{k.label}</p>
+                <p className="mt-1 text-2xl font-bold">{k.value}</p>
               </div>
-            )}
-
-            <div className="grid gap-6 lg:grid-cols-2">
-              <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5">
-                <h2 className="mb-4 text-sm font-semibold">Story types</h2>
-                <ul className="space-y-2 text-sm">
-                  {Object.entries(metrics.typeBreakdown).map(([t, n]) => (
-                    <li key={t} className="flex justify-between">
-                      <span className="capitalize">{t.replace("-", " ")}</span>
-                      <span className="font-medium">{n}</span>
-                    </li>
-                  ))}
-                  {Object.keys(metrics.typeBreakdown).length === 0 && (
-                    <li className="text-[var(--muted)]">No stories</li>
-                  )}
-                </ul>
-              </div>
-              <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5">
-                <h2 className="mb-4 text-sm font-semibold">Recent stories</h2>
-                <ul className="max-h-64 space-y-3 overflow-y-auto text-sm">
-                  {metrics.recentStories.map((s) => (
-                    <li key={s.id}>
-                      <Link href={`/p/${s.id}`} className="font-medium hover:text-[var(--primary)]">
-                        {s.title}
-                      </Link>
-                      <p className="text-xs text-[var(--muted)]">
-                        {s.type} · {new Date(s.created_at).toLocaleDateString()}
-                      </p>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </>
-        )}
-
-        {/* LEADS */}
-        {tab === "leads" && (
-          <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 sm:p-5">
-            <h2 className="mb-4 text-sm font-semibold">Leads by score</h2>
-            {leadsWarning && (
-              <p className="mb-3 text-xs text-amber-600">{leadsWarning}</p>
-            )}
-            {leads.length === 0 ? (
-              <p className="text-sm text-[var(--muted)]">
-                No leads yet. Events create leads when service role is set. Browse pricing or save
-                a story while logged in.
-              </p>
-            ) : (
-              <div className="space-y-3">
-                {leads.map((l) => (
-                  <div
-                    key={l.id}
-                    className="flex flex-col gap-3 rounded-xl border border-[var(--border)] p-4 sm:flex-row sm:items-center sm:justify-between"
-                  >
-                    <div className="min-w-0">
-                      <p className="truncate font-medium">{l.email}</p>
-                      <p className="text-xs text-[var(--muted)]">
-                        Score {l.score} · {l.temperature} · {l.stage}
-                        {l.last_event ? ` · last: ${l.last_event}` : ""}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      disabled={busyId === l.id}
-                      onClick={() => draftForLead(l.id)}
-                      className="h-10 shrink-0 rounded-xl bg-[var(--primary)] px-4 text-sm font-medium text-white disabled:opacity-50"
-                    >
-                      {busyId === l.id ? "Drafting…" : "Draft email"}
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
+            ))}
           </div>
         )}
 
-        {/* QUEUE */}
-        {tab === "queue" && (
-          <div className="space-y-4">
-            <p className="text-sm text-[var(--muted)]">
-              Approve then Send (needs <code className="text-xs">RESEND_API_KEY</code>). Or copy
-              body and send manually.
-            </p>
-            {tasks.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-[var(--border)] p-10 text-center text-sm text-[var(--muted)]">
-                No tasks. Create drafts from the Leads tab.
-              </div>
-            ) : (
-              tasks.map((t) => (
-                <div
-                  key={t.id}
-                  className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 sm:p-5"
-                >
-                  <div className="mb-2 flex flex-wrap items-center gap-2">
-                    <span
-                      className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                        t.status === "sent"
-                          ? "bg-emerald-500/15 text-emerald-600"
-                          : t.status === "failed"
-                          ? "bg-red-500/15 text-red-500"
-                          : t.status === "approved"
-                          ? "bg-[var(--badge-bg)] text-[var(--primary)]"
-                          : "bg-[var(--surface)] text-[var(--muted)]"
-                      }`}
-                    >
-                      {t.status}
-                    </span>
-                    <span className="text-xs text-[var(--muted)]">{t.to_email}</span>
-                  </div>
-                  <p className="font-medium">{t.subject || "(no subject)"}</p>
-                  <pre className="mt-3 max-h-40 overflow-y-auto whitespace-pre-wrap rounded-xl bg-[var(--background)] p-3 text-xs text-[var(--muted-strong)]">
-                    {t.body}
-                  </pre>
-                  {t.error && (
-                    <p className="mt-2 text-xs text-red-500">{t.error}</p>
-                  )}
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {t.status === "draft" && (
-                      <>
-                        <button
-                          type="button"
-                          disabled={busyId === t.id}
-                          onClick={() => taskAction(t.id, "set_status", "approved")}
-                          className="rounded-lg border border-[var(--primary)]/40 px-3 py-1.5 text-xs text-[var(--primary)]"
-                        >
-                          Approve
-                        </button>
-                        <button
-                          type="button"
-                          disabled={busyId === t.id}
-                          onClick={() => taskAction(t.id, "set_status", "rejected")}
-                          className="rounded-lg border border-[var(--border)] px-3 py-1.5 text-xs text-[var(--muted)]"
-                        >
-                          Reject
-                        </button>
-                      </>
-                    )}
-                    {(t.status === "approved" || t.status === "draft") && (
-                      <button
-                        type="button"
-                        disabled={busyId === t.id}
-                        onClick={() => taskAction(t.id, "send")}
-                        className="rounded-lg bg-[var(--primary)] px-3 py-1.5 text-xs font-medium text-white"
-                      >
-                        {busyId === t.id ? "…" : "Send via Resend"}
-                      </button>
-                    )}
+        {tab === "leads" && (
+          <div className="space-y-3">
+            {leads.length === 0 && (
+              <p className="text-sm text-[var(--muted)]">No leads yet. Need schema + service role + events.</p>
+            )}
+            {leads.map((l) => (
+              <div
+                key={l.id}
+                className="flex flex-col gap-3 rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="min-w-0">
+                  <p className="truncate font-medium">{l.email}</p>
+                  <p className="text-xs text-[var(--muted)]">
+                    {l.score} pts · {l.temperature} · {l.stage}
+                    {l.last_event ? ` · ${l.last_event}` : ""}
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <select
+                    className="rounded-lg border border-[var(--border)] bg-[var(--background)] px-2 py-1.5 text-xs"
+                    value={l.stage}
+                    onChange={(e) =>
+                      seqAction({
+                        action: "set_lead_stage",
+                        leadId: l.id,
+                        stage: e.target.value,
+                      })
+                    }
+                  >
+                    {STAGES.map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    disabled={busyId === l.id}
+                    onClick={() => draftForLead(l.id)}
+                    className="rounded-lg bg-[var(--primary)] px-3 py-1.5 text-xs font-medium text-white"
+                  >
+                    Draft email
+                  </button>
+                  {sequences[0] && (
                     <button
                       type="button"
                       onClick={() =>
-                        navigator.clipboard.writeText(
-                          `Subject: ${t.subject}\n\n${t.body}`
-                        )
+                        seqAction({
+                          action: "enroll",
+                          sequenceId: sequences[0].id,
+                          leadId: l.id,
+                        })
                       }
-                      className="rounded-lg border border-[var(--border)] px-3 py-1.5 text-xs text-[var(--muted)]"
+                      className="rounded-lg border border-[var(--border)] px-3 py-1.5 text-xs"
                     >
-                      Copy
+                      Enroll sequence
                     </button>
-                  </div>
+                  )}
                 </div>
-              ))
-            )}
+              </div>
+            ))}
           </div>
         )}
 
-        {/* AGENT */}
-        {tab === "agent" && (
-          <div className="rounded-2xl border border-[var(--primary)]/30 bg-[var(--card)] p-5 sm:p-6">
-            <h2 className="text-lg font-semibold">AI sales agent</h2>
-            <p className="mt-1 text-sm text-[var(--muted)]">
-              Freeform drafts (not tied to a lead). For lead-specific mail use Leads → Draft email.
+        {tab === "queue" && (
+          <div className="space-y-4">
+            {tasks.length === 0 && (
+              <p className="text-sm text-[var(--muted)]">Empty queue. Draft from Leads.</p>
+            )}
+            {tasks.map((t) => (
+              <div key={t.id} className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4">
+                <p className="text-xs text-[var(--muted)]">
+                  {t.status} · {t.to_email}
+                </p>
+                <p className="font-medium">{t.subject}</p>
+                <pre className="mt-2 max-h-32 overflow-y-auto whitespace-pre-wrap text-xs text-[var(--muted-strong)]">
+                  {t.body}
+                </pre>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {t.status === "draft" && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => taskAction(t.id, "set_status", "approved")}
+                        className="rounded-lg border border-[var(--primary)]/40 px-3 py-1 text-xs text-[var(--primary)]"
+                      >
+                        Approve
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => taskAction(t.id, "set_status", "rejected")}
+                        className="rounded-lg border px-3 py-1 text-xs"
+                      >
+                        Reject
+                      </button>
+                    </>
+                  )}
+                  {(t.status === "draft" || t.status === "approved") && (
+                    <button
+                      type="button"
+                      onClick={() => taskAction(t.id, "send")}
+                      className="rounded-lg bg-[var(--primary)] px-3 py-1 text-xs text-white"
+                    >
+                      Send
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {tab === "sequences" && (
+          <div className="space-y-6">
+            <p className="text-sm text-[var(--muted)]">
+              Phase 3: drip emails via hourly cron <code className="text-xs">/api/cron/sequences</code>.
+              Activate only when Resend + CRON_SECRET are set.
             </p>
-            <div className="mt-4 flex flex-wrap gap-2">
+            {sequences.map((s) => (
+              <div key={s.id} className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <h3 className="font-semibold">{s.name}</h3>
+                    <p className="text-xs text-[var(--muted)]">{s.description}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      seqAction({
+                        action: "toggle_active",
+                        sequenceId: s.id,
+                        is_active: !s.is_active,
+                      })
+                    }
+                    className={`rounded-full px-4 py-1.5 text-xs font-medium ${
+                      s.is_active
+                        ? "bg-emerald-500/15 text-emerald-600"
+                        : "bg-[var(--surface)] text-[var(--muted)]"
+                    }`}
+                  >
+                    {s.is_active ? "Active" : "Inactive"}
+                  </button>
+                </div>
+                <ul className="mt-4 space-y-1 text-xs text-[var(--muted-strong)]">
+                  {(s.sequence_steps || [])
+                    .sort((a, b) => a.step_order - b.step_order)
+                    .map((st) => (
+                      <li key={st.step_order}>
+                        Day +{st.delay_days}: {st.subject}
+                      </li>
+                    ))}
+                </ul>
+              </div>
+            ))}
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5">
+              <h3 className="mb-3 text-sm font-semibold">Enrollments</h3>
+              {enrollments.length === 0 && (
+                <p className="text-xs text-[var(--muted)]">None. Enroll from Leads tab.</p>
+              )}
+              {enrollments.map((e) => (
+                <div
+                  key={e.id}
+                  className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--border)] py-2 text-sm last:border-0"
+                >
+                  <span>
+                    {e.leads?.email || "—"} · step {e.current_step} · {e.status}
+                  </span>
+                  {e.status === "active" && (
+                    <button
+                      type="button"
+                      className="text-xs text-[var(--muted)] underline"
+                      onClick={() =>
+                        seqAction({
+                          action: "set_enrollment_status",
+                          enrollmentId: e.id,
+                          status: "paused",
+                        })
+                      }
+                    >
+                      Pause
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {tab === "campaigns" && (
+          <div className="space-y-4">
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                disabled={busyId === "camp"}
+                onClick={() => campaignAction({ action: "generate_weekly" })}
+                className="rounded-xl bg-[var(--primary)] px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+              >
+                {busyId === "camp" ? "Generating…" : "Generate weekly posts"}
+              </button>
+            </div>
+            <p className="text-xs text-[var(--muted)]">
+              Phase 4: AI ideas for X/LinkedIn. Mark published after you post manually.
+            </p>
+            {campaigns.length === 0 && (
+              <p className="text-sm text-[var(--muted)]">No campaigns yet.</p>
+            )}
+            {campaigns.map((c) => (
+              <div key={c.id} className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4">
+                <div className="mb-2 flex flex-wrap items-center gap-2 text-xs">
+                  <span className="rounded-full bg-[var(--badge-bg)] px-2 py-0.5 text-[var(--primary)]">
+                    {c.channel}
+                  </span>
+                  <span className="text-[var(--muted)]">{c.status}</span>
+                </div>
+                <p className="font-medium">{c.title}</p>
+                <pre className="mt-2 max-h-36 overflow-y-auto whitespace-pre-wrap text-xs text-[var(--muted-strong)]">
+                  {c.body}
+                </pre>
+                <div className="mt-3 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => navigator.clipboard.writeText(c.body)}
+                    className="rounded-lg border px-3 py-1 text-xs"
+                  >
+                    Copy
+                  </button>
+                  {c.status !== "published" && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        campaignAction({
+                          action: "set_status",
+                          campaignId: c.id,
+                          status: "published",
+                        })
+                      }
+                      className="rounded-lg bg-[var(--primary)] px-3 py-1 text-xs text-white"
+                    >
+                      Mark published
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {tab === "agent" && (
+          <div className="rounded-2xl border border-[var(--primary)]/30 bg-[var(--card)] p-5">
+            <h2 className="font-semibold">AI agent</h2>
+            <div className="mt-3 flex flex-wrap gap-2">
               {presets.map((p) => (
                 <button
                   key={p}
                   type="button"
                   onClick={() => setGoal(p)}
-                  className={`rounded-full border px-3 py-1 text-left text-xs ${
-                    goal === p
-                      ? "border-[var(--primary)] bg-[var(--badge-bg)] text-[var(--primary)]"
-                      : "border-[var(--border)] text-[var(--muted)]"
-                  }`}
+                  className="rounded-full border border-[var(--border)] px-3 py-1 text-xs text-[var(--muted)]"
                 >
-                  {p.slice(0, 40)}…
+                  {p.slice(0, 36)}…
                 </button>
               ))}
             </div>
@@ -468,28 +611,26 @@ export default function AdminPage() {
               value={goal}
               onChange={(e) => setGoal(e.target.value)}
               rows={3}
-              className="mt-4 w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm"
+              className="mt-4 w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm"
             />
             <textarea
               value={context}
               onChange={(e) => setContext(e.target.value)}
               rows={2}
-              placeholder="Extra context…"
-              className="mt-3 w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm"
+              placeholder="Context…"
+              className="mt-2 w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm"
             />
             <button
               type="button"
               onClick={runAgent}
               disabled={agentLoading}
-              className="mt-4 h-11 rounded-xl bg-[var(--primary)] px-6 text-sm font-semibold text-white disabled:opacity-50"
+              className="mt-3 rounded-xl bg-[var(--primary)] px-5 py-2 text-sm font-medium text-white"
             >
-              {agentLoading ? "Thinking…" : "Generate →"}
+              {agentLoading ? "…" : "Generate"}
             </button>
             {agentError && <p className="mt-2 text-sm text-red-500">{agentError}</p>}
             {agentOut && (
-              <pre className="mt-4 max-h-[480px] overflow-y-auto whitespace-pre-wrap rounded-xl border border-[var(--border)] bg-[var(--background)] p-4 text-sm">
-                {agentOut}
-              </pre>
+              <pre className="mt-4 max-h-96 overflow-y-auto whitespace-pre-wrap text-sm">{agentOut}</pre>
             )}
           </div>
         )}
