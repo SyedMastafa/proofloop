@@ -31,7 +31,7 @@ export default function LoginPage() {
   }
 
   const input =
-    "w-full rounded-xl border border-[var(--border)] bg-[var(--card)] px-4 py-3 text-sm text-[var(--foreground)] placeholder:text-[var(--muted)] focus:border-[var(--primary)] focus:outline-none";
+    "w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm text-[var(--foreground)] placeholder:text-[var(--muted)] focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20";
 
   return (
     <div className="relative flex min-h-screen items-center justify-center bg-[var(--background)] px-6">
@@ -41,7 +41,9 @@ export default function LoginPage() {
       <div className="w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--card)] p-8">
         <div className="mb-8 text-center">
           <Link href="/" className="inline-flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--primary)] text-sm font-bold text-white">P</div>
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--primary)] text-sm font-bold text-white">
+              P
+            </div>
             <span className="text-xl font-semibold text-[var(--foreground)]">ProofLoop</span>
           </Link>
           <p className="mt-3 text-[var(--muted)]">Log in to your account</p>
@@ -49,22 +51,52 @@ export default function LoginPage() {
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
             <label className="mb-1.5 block text-sm text-[var(--muted-strong)]">Email</label>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="you@company.com" className={input} />
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              placeholder="you@company.com"
+              className={input}
+            />
           </div>
           <div>
-            <label className="mb-1.5 block text-sm text-[var(--muted-strong)]">Password</label>
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required placeholder="••••••••" className={input} />
+            <div className="mb-1.5 flex items-center justify-between">
+              <label className="text-sm text-[var(--muted-strong)]">Password</label>
+              <Link
+                href="/forgot-password"
+                className="text-xs font-medium text-[var(--primary)] hover:underline"
+              >
+                Forgot password?
+              </Link>
+            </div>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              placeholder="••••••••"
+              className={input}
+            />
           </div>
           {error && (
-            <div className="rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-500">{error}</div>
+            <div className="rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-500">
+              {error}
+            </div>
           )}
-          <button type="submit" disabled={loading} className="w-full rounded-xl bg-[var(--primary)] py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50">
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full rounded-xl bg-[var(--primary)] py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
+          >
             {loading ? "Logging in..." : "Log in"}
           </button>
         </form>
         <p className="mt-6 text-center text-sm text-[var(--muted)]">
           Don&apos;t have an account?{" "}
-          <Link href="/signup" className="text-[var(--primary)] hover:underline">Sign up</Link>
+          <Link href="/signup" className="text-[var(--primary)] hover:underline">
+            Sign up
+          </Link>
         </p>
       </div>
     </div>
