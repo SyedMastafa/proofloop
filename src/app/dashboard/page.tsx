@@ -16,6 +16,7 @@ const tabs: { id: Tab; label: string; hint: string }[] = [
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState<Tab>("testimonial");
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [result, setResult] = useState("");
   const [error, setError] = useState("");
   const [savedId, setSavedId] = useState<string | null>(null);
@@ -66,27 +67,35 @@ export default function DashboardPage() {
     }
   }
 
-  function handleSave() {
+  async function handleSave() {
     if (!result) return;
-    const title =
-      activeTab === "testimonial"
-        ? `Testimonial${companyName ? ` – ${companyName}` : ""}`
-        : activeTab === "case-study"
-        ? `Case Study – ${csCompany || customerName || "Untitled"}`
-        : "Social Posts";
-    const story = saveStory({
-      type: activeTab,
-      title,
-      content: result,
-      customerName: activeTab === "case-study" ? customerName : undefined,
-      companyName:
+    setSaving(true);
+    setError("");
+    try {
+      const title =
         activeTab === "testimonial"
-          ? companyName
+          ? `Testimonial${companyName ? ` – ${companyName}` : ""}`
           : activeTab === "case-study"
-          ? csCompany
-          : undefined,
-    });
-    setSavedId(story.id);
+          ? `Case Study – ${csCompany || customerName || "Untitled"}`
+          : "Social Posts";
+      const story = await saveStory({
+        type: activeTab,
+        title,
+        content: result,
+        customerName: activeTab === "case-study" ? customerName : undefined,
+        companyName:
+          activeTab === "testimonial"
+            ? companyName
+            : activeTab === "case-study"
+            ? csCompany
+            : undefined,
+      });
+      setSavedId(story.id);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Save failed");
+    } finally {
+      setSaving(false);
+    }
   }
 
   const inputClass =
@@ -107,7 +116,6 @@ export default function DashboardPage() {
       />
 
       <main className="mx-auto max-w-5xl px-6 py-10">
-        {/* Page intro */}
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-[var(--foreground)] sm:text-3xl">
@@ -125,12 +133,11 @@ export default function DashboardPage() {
           </Link>
         </div>
 
-        {/* Quick tips */}
         <div className="mb-8 grid gap-3 sm:grid-cols-3">
           {[
             { t: "Paste real words", d: "Support notes & call snippets work best" },
             { t: "Add metrics", d: "Numbers make testimonials convert" },
-            { t: "Save & share", d: "Public page + embed in one click" },
+            { t: "Save to cloud", d: "Logged-in saves go to Supabase" },
           ].map((x) => (
             <div
               key={x.t}
@@ -143,7 +150,6 @@ export default function DashboardPage() {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-5">
-          {/* Input panel */}
           <div className="lg:col-span-3">
             <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6">
               <div className="mb-6 flex flex-wrap gap-2">
@@ -299,7 +305,6 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Output panel */}
           <div className="lg:col-span-2">
             <div className="sticky top-24 rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6">
               <div className="mb-4 flex items-center justify-between">
@@ -314,9 +319,10 @@ export default function DashboardPage() {
                     </button>
                     <button
                       onClick={handleSave}
-                      className="rounded-lg border border-[var(--primary)]/40 bg-[var(--badge-bg)] px-2.5 py-1 text-xs text-[var(--primary)]"
+                      disabled={saving}
+                      className="rounded-lg border border-[var(--primary)]/40 bg-[var(--badge-bg)] px-2.5 py-1 text-xs text-[var(--primary)] disabled:opacity-50"
                     >
-                      {savedId ? "Saved ✓" : "Save"}
+                      {savedId ? "Saved ✓" : saving ? "Saving…" : "Save"}
                     </button>
                   </div>
                 )}
@@ -345,7 +351,7 @@ export default function DashboardPage() {
                   </pre>
                   {savedId && (
                     <p className="mt-4 text-sm text-emerald-600">
-                      Saved!{" "}
+                      Saved to cloud!{" "}
                       <Link href={`/p/${savedId}`} className="font-medium underline">
                         Open public page →
                       </Link>

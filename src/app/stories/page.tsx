@@ -2,20 +2,38 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { getStories, deleteStory, type Story } from "@/lib/storage";
+import {
+  getStories,
+  deleteStory,
+  migrateLocalStoriesToCloud,
+  type Story,
+} from "@/lib/storage";
 import { AppHeader } from "@/components/app-header";
 
 export default function StoriesPage() {
   const [stories, setStories] = useState<Story[]>([]);
+  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | Story["type"]>("all");
+  const [migrateMsg, setMigrateMsg] = useState("");
+
+  async function load() {
+    setLoading(true);
+    try {
+      const n = await migrateLocalStoriesToCloud();
+      if (n > 0) setMigrateMsg(`Migrated ${n} local stor${n === 1 ? "y" : "ies"} to cloud.`);
+      setStories(await getStories());
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
-    setStories(getStories());
+    load();
   }, []);
 
-  function handleDelete(id: string) {
-    deleteStory(id);
-    setStories(getStories());
+  async function handleDelete(id: string) {
+    await deleteStory(id);
+    setStories(await getStories());
   }
 
   const filtered =
@@ -46,7 +64,7 @@ export default function StoriesPage() {
               My Stories
             </h1>
             <p className="mt-1 text-[var(--muted)]">
-              Saved testimonials, case studies, and social packs — ready to share.
+              Synced to Supabase when you&apos;re logged in — available on any device.
             </p>
           </div>
           <Link
@@ -56,6 +74,12 @@ export default function StoriesPage() {
             + New story
           </Link>
         </div>
+
+        {migrateMsg && (
+          <div className="mb-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm text-emerald-600">
+            {migrateMsg}
+          </div>
+        )}
 
         {stories.length > 0 && (
           <div className="mb-6 flex flex-wrap gap-2">
@@ -82,14 +106,18 @@ export default function StoriesPage() {
           </div>
         )}
 
-        {stories.length === 0 ? (
+        {loading ? (
+          <div className="flex justify-center py-20">
+            <span className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--primary)]/30 border-t-[var(--primary)]" />
+          </div>
+        ) : stories.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-[var(--border)] bg-[var(--card)] px-6 py-16 text-center">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--badge-bg)] text-[var(--primary)] text-lg font-bold">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--badge-bg)] text-lg font-bold text-[var(--primary)]">
               P
             </div>
             <p className="mb-1 text-base font-medium text-[var(--foreground)]">No stories yet</p>
             <p className="mb-6 text-sm text-[var(--muted)]">
-              Generate a testimonial or case study — it will show up here.
+              Generate a testimonial or case study — it will sync to the cloud when logged in.
             </p>
             <Link
               href="/dashboard"
