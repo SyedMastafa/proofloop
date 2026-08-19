@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { PLANS, type PlanId } from "@/lib/plans";
 import { AppHeader } from "@/components/app-header";
+import { track } from "@/lib/track";
 
 const faqs = [
   {
@@ -29,11 +30,16 @@ export default function PricingPage() {
   const [error, setError] = useState("");
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
+  useEffect(() => {
+    track("pricing_view");
+  }, []);
+
   async function handleCheckout(planId: PlanId) {
     if (planId === "free") {
       window.location.href = "/signup";
       return;
     }
+    track("checkout_started", { planId });
     setLoading(planId);
     setError("");
     try {
@@ -103,9 +109,7 @@ export default function PricingPage() {
                 <span className="text-4xl font-bold tracking-tight text-[var(--foreground)]">
                   {plan.priceLabel}
                 </span>
-                {plan.price > 0 && (
-                  <span className="text-[var(--muted)]">/mo</span>
-                )}
+                {plan.price > 0 && <span className="text-[var(--muted)]">/mo</span>}
               </div>
               <ul className="mb-8 flex-1 space-y-2.5 text-sm text-[var(--muted-strong)]">
                 {plan.features.map((f) => (
@@ -138,17 +142,13 @@ export default function PricingPage() {
           Payments powered by Stripe · Cancel anytime · Enterprise: custom pricing
         </p>
 
-        {/* Trust strip */}
         <div className="mx-auto mt-16 max-w-3xl rounded-2xl border border-[var(--border)] bg-[var(--card)] p-8 text-center">
           <p className="text-sm leading-relaxed text-[var(--muted-strong)]">
             “We stopped waiting on case studies for sales calls. Generate, publish, share — same day.”
           </p>
-          <p className="mt-3 text-xs font-medium text-[var(--foreground)]">
-            Early team · B2B SaaS
-          </p>
+          <p className="mt-3 text-xs font-medium text-[var(--foreground)]">Early team · B2B SaaS</p>
         </div>
 
-        {/* FAQ */}
         <div className="mx-auto mt-20 max-w-2xl">
           <h2 className="mb-8 text-center text-2xl font-bold text-[var(--foreground)]">
             Frequently asked questions
@@ -157,7 +157,7 @@ export default function PricingPage() {
             {faqs.map((faq, i) => (
               <div
                 key={faq.q}
-                className="rounded-xl border border-[var(--border)] bg-[var(--card)] overflow-hidden"
+                className="overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--card)]"
               >
                 <button
                   type="button"
@@ -178,9 +178,7 @@ export default function PricingPage() {
         </div>
 
         <div className="mt-20 text-center">
-          <h2 className="mb-3 text-2xl font-bold text-[var(--foreground)]">
-            Still deciding?
-          </h2>
+          <h2 className="mb-3 text-2xl font-bold text-[var(--foreground)]">Still deciding?</h2>
           <p className="mb-6 text-[var(--muted)]">
             Try the generator free — no card, no commitment.
           </p>

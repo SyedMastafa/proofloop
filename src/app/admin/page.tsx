@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { AppHeader } from "@/components/app-header";
 
@@ -26,6 +26,32 @@ type Metrics = {
   adminEmail: string;
 };
 
+type Lead = {
+  id: string;
+  email: string;
+  score: number;
+  temperature: string;
+  stage: string;
+  last_event: string | null;
+  last_seen_at: string;
+  created_at: string;
+};
+
+type Task = {
+  id: string;
+  lead_id: string | null;
+  type: string;
+  status: string;
+  subject: string | null;
+  body: string;
+  to_email: string | null;
+  error: string | null;
+  created_at: string;
+  sent_at: string | null;
+};
+
+type Tab = "overview" | "leads" | "queue" | "agent";
+
 const presets = [
   "Write a 3-email onboarding sequence for new free users who haven't created a story yet",
   "Draft a Product Hunt launch post and 3 maker comments",
@@ -35,9 +61,15 @@ const presets = [
 ];
 
 export default function AdminPage() {
+  const [tab, setTab] = useState<Tab>("overview");
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [loadError, setLoadError] = useState("");
   const [loading, setLoading] = useState(true);
+
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [leadsWarning, setLeadsWarning] = useState("");
+  const [busyId, setBusyId] = useState<string | null>(null);
 
   const [goal, setGoal] = useState(presets[0]);
   const [context, setContext] = useState("");
@@ -45,21 +77,44 @@ export default function AdminPage() {
   const [agentLoading, setAgentLoading] = useState(false);
   const [agentError, setAgentError] = useState("");
 
-  useEffect(() => {
-    (async () => {
-      setLoading(true);
-      try {
-        const res = await fetch("/api/admin/metrics");
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Forbidden");
-        setMetrics(data);
-      } catch (e: unknown) {
-        setLoadError(e instanceof Error ? e.message : "Failed to load");
-      } finally {
-        setLoading(false);
-      }
-    })();
+  const loadMetrics = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/admin/metrics");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Forbidden");
+      setMetrics(data);
+      setLoadError("");
+    } catch (e: unknown) {
+      setLoadError(e instanceof Error ? e.message : "Failed to load");
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  const loadLeads = useCallback(async () => {
+    const res = await fetch("/api/admin/leads");
+    const data = await res.json();
+    if (res.ok) {
+      setLeads(data.leads || []);
+      setLeadsWarning(data.warning || "");
+    }
+  }, []);
+
+  const loadTasks = useCallback(async () => {
+    const res = await fetch("/api/admin/tasks");
+    const data = await res.json();
+    if (res.ok) setTasks(data.tasks || []);
+  }, []);
+
+  useEffect(() => {
+    loadMetrics();
+  }, [loadMetrics]);
+
+  useEffect(() => {
+    if (tab === "leads") loadLeads();
+    if (tab === "queue") loadTasks();
+  }, [tab, loadLeads, loadTasks]);
 
   async function runAgent() {
     setAgentLoading(true);
@@ -81,6 +136,54 @@ export default function AdminPage() {
     }
   }
 
+  async function draftForLead(leadId: string) {
+    setBusyId(leadId);
+    try {
+      const res = await fetch("/api/admin/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "draft_for_lead", leadId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Draft failed");
+      setTab("queue");
+      await loadTasks();
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : "Failed");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function taskAction(taskId: string, action: string, status?: string) {
+    setBusyId(taskId);
+    try {
+      const res = await fetch("/api/admin/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(
+          action === "send"
+            ? { action: "send", taskId }
+            : { action: "set_status", taskId, status }
+        ),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed");
+      await loadTasks();
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : "Failed");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  const tabs: { id: Tab; label: string }[] = [
+    { id: "overview", label: "Overview" },
+    { id: "leads", label: "Leads" },
+    { id: "queue", label: "Approve queue" },
+    { id: "agent", label: "Agent" },
+  ];
+
   return (
     <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
       <AppHeader
@@ -93,17 +196,34 @@ export default function AdminPage() {
       />
 
       <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-        <div className="mb-8">
+        <div className="mb-6">
           <p className="text-xs font-medium uppercase tracking-wider text-[var(--primary)]">
-            Phase 1
+            Phase 2
           </p>
           <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Admin dashboard</h1>
           <p className="mt-1 text-sm text-[var(--muted)]">
-            Metrics + AI sales agent (draft only — no auto-send).
+            Leads, scoring, approve-to-send queue, AI drafts.
           </p>
         </div>
 
-        {loading && (
+        <div className="mb-8 flex gap-2 overflow-x-auto pb-1">
+          {tabs.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => setTab(t.id)}
+              className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium ${
+                tab === t.id
+                  ? "bg-[var(--primary)] text-white"
+                  : "border border-[var(--border)] text-[var(--muted)]"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        {loading && tab === "overview" && (
           <div className="flex justify-center py-20">
             <span className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--primary)]/30 border-t-[var(--primary)]" />
           </div>
@@ -113,9 +233,7 @@ export default function AdminPage() {
           <div className="rounded-2xl border border-amber-500/40 bg-amber-500/10 p-6 text-sm">
             <p className="font-medium text-amber-700 dark:text-amber-400">{loadError}</p>
             <p className="mt-2 text-[var(--muted)]">
-              Log in with an email listed in <code className="text-xs">ADMIN_EMAILS</code> on
-              Vercel, then redeploy. Example:{" "}
-              <code className="text-xs">ADMIN_EMAILS=you@company.com</code>
+              Set <code className="text-xs">ADMIN_EMAILS</code> to your login email on Vercel.
             </p>
             <Link href="/login" className="mt-4 inline-block text-[var(--primary)] underline">
               Go to login →
@@ -123,9 +241,9 @@ export default function AdminPage() {
           </div>
         )}
 
-        {metrics && (
+        {/* OVERVIEW */}
+        {metrics && tab === "overview" && (
           <>
-            {/* KPI cards */}
             <div className="mb-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {[
                 { label: "Stories total", value: metrics.storyCount },
@@ -139,10 +257,7 @@ export default function AdminPage() {
                       ? `${metrics.userCount}+`
                       : metrics.userCount,
                 },
-                {
-                  label: "Admin",
-                  value: metrics.adminEmail?.split("@")[0] || "—",
-                },
+                { label: "Admin", value: metrics.adminEmail?.split("@")[0] || "—" },
               ].map((k) => (
                 <div
                   key={k.label}
@@ -151,52 +266,38 @@ export default function AdminPage() {
                   <p className="text-xs font-medium uppercase tracking-wider text-[var(--muted)]">
                     {k.label}
                   </p>
-                  <p className="mt-1 truncate text-2xl font-bold text-[var(--foreground)]">
-                    {k.value}
-                  </p>
+                  <p className="mt-1 truncate text-2xl font-bold">{k.value}</p>
                 </div>
               ))}
             </div>
 
             {!metrics.hasServiceRole && (
               <div className="mb-6 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-xs text-[var(--muted)]">
-                Add <code>SUPABASE_SERVICE_ROLE_KEY</code> in Vercel for full user list (server
-                only). Story metrics still work without it.
+                Add <code>SUPABASE_SERVICE_ROLE_KEY</code> for users, leads, and queue.
               </div>
             )}
 
-            <div className="mb-10 grid gap-6 lg:grid-cols-2">
-              {/* Type breakdown */}
+            <div className="grid gap-6 lg:grid-cols-2">
               <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5">
                 <h2 className="mb-4 text-sm font-semibold">Story types</h2>
                 <ul className="space-y-2 text-sm">
-                  {Object.keys(metrics.typeBreakdown).length === 0 && (
-                    <li className="text-[var(--muted)]">No stories yet</li>
-                  )}
                   {Object.entries(metrics.typeBreakdown).map(([t, n]) => (
                     <li key={t} className="flex justify-between">
-                      <span className="capitalize text-[var(--muted-strong)]">
-                        {t.replace("-", " ")}
-                      </span>
+                      <span className="capitalize">{t.replace("-", " ")}</span>
                       <span className="font-medium">{n}</span>
                     </li>
                   ))}
+                  {Object.keys(metrics.typeBreakdown).length === 0 && (
+                    <li className="text-[var(--muted)]">No stories</li>
+                  )}
                 </ul>
               </div>
-
-              {/* Recent stories */}
               <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5">
                 <h2 className="mb-4 text-sm font-semibold">Recent stories</h2>
                 <ul className="max-h-64 space-y-3 overflow-y-auto text-sm">
-                  {metrics.recentStories.length === 0 && (
-                    <li className="text-[var(--muted)]">None yet</li>
-                  )}
                   {metrics.recentStories.map((s) => (
-                    <li key={s.id} className="border-b border-[var(--border)] pb-2 last:border-0">
-                      <Link
-                        href={`/p/${s.id}`}
-                        className="font-medium text-[var(--foreground)] hover:text-[var(--primary)]"
-                      >
+                    <li key={s.id}>
+                      <Link href={`/p/${s.id}`} className="font-medium hover:text-[var(--primary)]">
                         {s.title}
                       </Link>
                       <p className="text-xs text-[var(--muted)]">
@@ -207,123 +308,190 @@ export default function AdminPage() {
                 </ul>
               </div>
             </div>
+          </>
+        )}
 
-            {/* Users table */}
-            <div className="mb-10 rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5">
-              <h2 className="mb-4 text-sm font-semibold">Users (latest page)</h2>
-              {metrics.users.length === 0 ? (
-                <p className="text-sm text-[var(--muted)]">
-                  {metrics.hasServiceRole
-                    ? "No users found."
-                    : "Set SUPABASE_SERVICE_ROLE_KEY to load auth users."}
-                </p>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full min-w-[480px] text-left text-sm">
-                    <thead>
-                      <tr className="border-b border-[var(--border)] text-xs text-[var(--muted)]">
-                        <th className="pb-2 pr-4 font-medium">Email</th>
-                        <th className="pb-2 pr-4 font-medium">Created</th>
-                        <th className="pb-2 font-medium">Last sign-in</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {metrics.users.map((u) => (
-                        <tr key={u.id} className="border-b border-[var(--border)]/60">
-                          <td className="py-2.5 pr-4 text-[var(--foreground)]">
-                            {u.email || u.id.slice(0, 8)}
-                          </td>
-                          <td className="py-2.5 pr-4 text-[var(--muted)]">
-                            {new Date(u.created_at).toLocaleDateString()}
-                          </td>
-                          <td className="py-2.5 text-[var(--muted)]">
-                            {u.last_sign_in_at
-                              ? new Date(u.last_sign_in_at).toLocaleDateString()
-                              : "—"}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-
-            {/* AI Agent */}
-            <div className="rounded-2xl border border-[var(--primary)]/30 bg-[var(--card)] p-5 sm:p-6">
-              <h2 className="text-lg font-semibold text-[var(--foreground)]">AI sales agent</h2>
-              <p className="mt-1 text-sm text-[var(--muted)]">
-                Drafts only. Copy what you need — nothing is sent automatically.
+        {/* LEADS */}
+        {tab === "leads" && (
+          <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 sm:p-5">
+            <h2 className="mb-4 text-sm font-semibold">Leads by score</h2>
+            {leadsWarning && (
+              <p className="mb-3 text-xs text-amber-600">{leadsWarning}</p>
+            )}
+            {leads.length === 0 ? (
+              <p className="text-sm text-[var(--muted)]">
+                No leads yet. Events create leads when service role is set. Browse pricing or save
+                a story while logged in.
               </p>
-
-              <div className="mt-4 flex flex-wrap gap-2">
-                {presets.map((p) => (
-                  <button
-                    key={p}
-                    type="button"
-                    onClick={() => setGoal(p)}
-                    className={`rounded-full border px-3 py-1 text-left text-xs ${
-                      goal === p
-                        ? "border-[var(--primary)] bg-[var(--badge-bg)] text-[var(--primary)]"
-                        : "border-[var(--border)] text-[var(--muted)]"
-                    }`}
+            ) : (
+              <div className="space-y-3">
+                {leads.map((l) => (
+                  <div
+                    key={l.id}
+                    className="flex flex-col gap-3 rounded-xl border border-[var(--border)] p-4 sm:flex-row sm:items-center sm:justify-between"
                   >
-                    {p.slice(0, 42)}…
-                  </button>
-                ))}
-              </div>
-
-              <label className="mt-5 block text-xs font-medium text-[var(--muted)]">Goal</label>
-              <textarea
-                value={goal}
-                onChange={(e) => setGoal(e.target.value)}
-                rows={3}
-                className="mt-1.5 w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm focus:border-[var(--primary)] focus:outline-none"
-              />
-
-              <label className="mt-4 block text-xs font-medium text-[var(--muted)]">
-                Extra context (optional)
-              </label>
-              <textarea
-                value={context}
-                onChange={(e) => setContext(e.target.value)}
-                rows={2}
-                placeholder="ICP, tone, upcoming launch date…"
-                className="mt-1.5 w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm focus:border-[var(--primary)] focus:outline-none"
-              />
-
-              <button
-                type="button"
-                onClick={runAgent}
-                disabled={agentLoading}
-                className="mt-4 inline-flex h-11 items-center rounded-xl bg-[var(--primary)] px-6 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50"
-              >
-                {agentLoading ? "Agent thinking…" : "Generate drafts →"}
-              </button>
-
-              {agentError && (
-                <p className="mt-3 text-sm text-red-500">{agentError}</p>
-              )}
-
-              {agentOut && (
-                <div className="mt-6">
-                  <div className="mb-2 flex items-center justify-between">
-                    <h3 className="text-sm font-semibold">Output</h3>
+                    <div className="min-w-0">
+                      <p className="truncate font-medium">{l.email}</p>
+                      <p className="text-xs text-[var(--muted)]">
+                        Score {l.score} · {l.temperature} · {l.stage}
+                        {l.last_event ? ` · last: ${l.last_event}` : ""}
+                      </p>
+                    </div>
                     <button
                       type="button"
-                      onClick={() => navigator.clipboard.writeText(agentOut)}
-                      className="text-xs text-[var(--primary)] hover:underline"
+                      disabled={busyId === l.id}
+                      onClick={() => draftForLead(l.id)}
+                      className="h-10 shrink-0 rounded-xl bg-[var(--primary)] px-4 text-sm font-medium text-white disabled:opacity-50"
                     >
-                      Copy all
+                      {busyId === l.id ? "Drafting…" : "Draft email"}
                     </button>
                   </div>
-                  <pre className="max-h-[480px] overflow-y-auto whitespace-pre-wrap rounded-xl border border-[var(--border)] bg-[var(--background)] p-4 text-sm leading-relaxed text-[var(--foreground)]">
-                    {agentOut}
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* QUEUE */}
+        {tab === "queue" && (
+          <div className="space-y-4">
+            <p className="text-sm text-[var(--muted)]">
+              Approve then Send (needs <code className="text-xs">RESEND_API_KEY</code>). Or copy
+              body and send manually.
+            </p>
+            {tasks.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-[var(--border)] p-10 text-center text-sm text-[var(--muted)]">
+                No tasks. Create drafts from the Leads tab.
+              </div>
+            ) : (
+              tasks.map((t) => (
+                <div
+                  key={t.id}
+                  className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 sm:p-5"
+                >
+                  <div className="mb-2 flex flex-wrap items-center gap-2">
+                    <span
+                      className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                        t.status === "sent"
+                          ? "bg-emerald-500/15 text-emerald-600"
+                          : t.status === "failed"
+                          ? "bg-red-500/15 text-red-500"
+                          : t.status === "approved"
+                          ? "bg-[var(--badge-bg)] text-[var(--primary)]"
+                          : "bg-[var(--surface)] text-[var(--muted)]"
+                      }`}
+                    >
+                      {t.status}
+                    </span>
+                    <span className="text-xs text-[var(--muted)]">{t.to_email}</span>
+                  </div>
+                  <p className="font-medium">{t.subject || "(no subject)"}</p>
+                  <pre className="mt-3 max-h-40 overflow-y-auto whitespace-pre-wrap rounded-xl bg-[var(--background)] p-3 text-xs text-[var(--muted-strong)]">
+                    {t.body}
                   </pre>
+                  {t.error && (
+                    <p className="mt-2 text-xs text-red-500">{t.error}</p>
+                  )}
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {t.status === "draft" && (
+                      <>
+                        <button
+                          type="button"
+                          disabled={busyId === t.id}
+                          onClick={() => taskAction(t.id, "set_status", "approved")}
+                          className="rounded-lg border border-[var(--primary)]/40 px-3 py-1.5 text-xs text-[var(--primary)]"
+                        >
+                          Approve
+                        </button>
+                        <button
+                          type="button"
+                          disabled={busyId === t.id}
+                          onClick={() => taskAction(t.id, "set_status", "rejected")}
+                          className="rounded-lg border border-[var(--border)] px-3 py-1.5 text-xs text-[var(--muted)]"
+                        >
+                          Reject
+                        </button>
+                      </>
+                    )}
+                    {(t.status === "approved" || t.status === "draft") && (
+                      <button
+                        type="button"
+                        disabled={busyId === t.id}
+                        onClick={() => taskAction(t.id, "send")}
+                        className="rounded-lg bg-[var(--primary)] px-3 py-1.5 text-xs font-medium text-white"
+                      >
+                        {busyId === t.id ? "…" : "Send via Resend"}
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        navigator.clipboard.writeText(
+                          `Subject: ${t.subject}\n\n${t.body}`
+                        )
+                      }
+                      className="rounded-lg border border-[var(--border)] px-3 py-1.5 text-xs text-[var(--muted)]"
+                    >
+                      Copy
+                    </button>
+                  </div>
                 </div>
-              )}
+              ))
+            )}
+          </div>
+        )}
+
+        {/* AGENT */}
+        {tab === "agent" && (
+          <div className="rounded-2xl border border-[var(--primary)]/30 bg-[var(--card)] p-5 sm:p-6">
+            <h2 className="text-lg font-semibold">AI sales agent</h2>
+            <p className="mt-1 text-sm text-[var(--muted)]">
+              Freeform drafts (not tied to a lead). For lead-specific mail use Leads → Draft email.
+            </p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {presets.map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => setGoal(p)}
+                  className={`rounded-full border px-3 py-1 text-left text-xs ${
+                    goal === p
+                      ? "border-[var(--primary)] bg-[var(--badge-bg)] text-[var(--primary)]"
+                      : "border-[var(--border)] text-[var(--muted)]"
+                  }`}
+                >
+                  {p.slice(0, 40)}…
+                </button>
+              ))}
             </div>
-          </>
+            <textarea
+              value={goal}
+              onChange={(e) => setGoal(e.target.value)}
+              rows={3}
+              className="mt-4 w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm"
+            />
+            <textarea
+              value={context}
+              onChange={(e) => setContext(e.target.value)}
+              rows={2}
+              placeholder="Extra context…"
+              className="mt-3 w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm"
+            />
+            <button
+              type="button"
+              onClick={runAgent}
+              disabled={agentLoading}
+              className="mt-4 h-11 rounded-xl bg-[var(--primary)] px-6 text-sm font-semibold text-white disabled:opacity-50"
+            >
+              {agentLoading ? "Thinking…" : "Generate →"}
+            </button>
+            {agentError && <p className="mt-2 text-sm text-red-500">{agentError}</p>}
+            {agentOut && (
+              <pre className="mt-4 max-h-[480px] overflow-y-auto whitespace-pre-wrap rounded-xl border border-[var(--border)] bg-[var(--background)] p-4 text-sm">
+                {agentOut}
+              </pre>
+            )}
+          </div>
         )}
       </main>
     </div>
