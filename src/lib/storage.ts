@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
+import { storyLimitForPlan } from "@/lib/limits";
 
 export type Story = {
   id: string;
@@ -52,27 +53,26 @@ function localSave(stories: Story[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(stories));
 }
 
-async function currentUserId(): Promise<string | null> {
+async function currentUser() {
   try {
     const supabase = createClient();
     const { data } = await supabase.auth.getUser();
-    return data.user?.id ?? null;
+    return data.user;
   } catch {
     return null;
   }
 }
 
-/** List stories for the current user (cloud) or local fallback */
 export async function getStories(): Promise<Story[]> {
-  const userId = await currentUserId();
-  if (!userId) return localGet();
+  const user = await currentUser();
+  if (!user) return localGet();
 
   try {
     const supabase = createClient();
     const { data, error } = await supabase
       .from("stories")
       .select("*")
-      .eq("user_id", userId)
+      .eq("user_id", user.id)
       .order("created_at", { ascending: false });
 
     if (error) throw error;
@@ -83,14 +83,18 @@ export async function getStories(): Promise<Story[]> {
   }
 }
 
-/** Save story — cloud if logged in, else localStorage */
 export async function saveStory(
   story: Omit<Story, "id" | "createdAt">
 ): Promise<Story> {
-  const userId = await currentUserId();
+  const user = await currentUser();
 
-  if (!userId) {
+  if (!user) {
     const stories = localGet();
+    if (stories.length >= storyLimitForPlan("free")) {
+      throw new Error(
+        `Free plan limit (${storyLimitForPlan("free")} stories). Sign up & upgrade for more.`
+      );
+    }
     const newStory: Story = {
       ...story,
       id: crypto.randomUUID(),
@@ -103,10 +107,27 @@ export async function saveStory(
   }
 
   const supabase = createClient();
+  const plan =
+    (user.user_metadata?.plan as string | undefined) ||
+    (user.app_metadata?.plan as string | undefined) ||
+    "free";
+  const limit = storyLimitForPlan(plan);
+
+  const { count, error: countError } = await supabase
+    .from("stories")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", user.id);
+
+  if (!countError && typeof count === "number" && count >= limit) {
+    throw new Error(
+      `Plan limit reached (${limit} stories). Upgrade on the pricing page for more.`
+    );
+  }
+
   const { data, error } = await supabase
     .from("stories")
     .insert({
-      user_id: userId,
+      user_id: user.id,
       type: story.type,
       title: story.title,
       content: story.content,
@@ -133,7 +154,6 @@ export async function saveStory(
   return rowToStory(data as DbRow);
 }
 
-/** Public or owned story by id */
 export async function getStory(id: string): Promise<Story | null> {
   try {
     const supabase = createClient();
@@ -152,9 +172,9 @@ export async function getStory(id: string): Promise<Story | null> {
 }
 
 export async function deleteStory(id: string): Promise<void> {
-  const userId = await currentUserId();
+  const user = await currentUser();
 
-  if (userId) {
+  if (user) {
     try {
       const supabase = createClient();
       const { error } = await supabase.from("stories").delete().eq("id", id);
@@ -168,10 +188,9 @@ export async function deleteStory(id: string): Promise<void> {
   localSave(localGet().filter((s) => s.id !== id));
 }
 
-/** Migrate any local stories to cloud once user is logged in */
 export async function migrateLocalStoriesToCloud(): Promise<number> {
-  const userId = await currentUserId();
-  if (!userId) return 0;
+  const user = await currentUser();
+  if (!user) return 0;
 
   const local = localGet();
   if (local.length === 0) return 0;
@@ -182,7 +201,7 @@ export async function migrateLocalStoriesToCloud(): Promise<number> {
   for (const s of local) {
     const { error } = await supabase.from("stories").insert({
       id: s.id,
-      user_id: userId,
+      user_id: user.id,
       type: s.type,
       title: s.title,
       content: s.content,

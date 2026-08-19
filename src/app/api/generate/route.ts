@@ -4,9 +4,22 @@ import {
   generateCaseStudy,
   generateSocialPosts,
 } from "@/lib/gemini";
+import { clientIp, rateLimit } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
   try {
+    const ip = clientIp(req);
+    const rl = rateLimit(`generate:${ip}`, 20, 60_000);
+    if (!rl.ok) {
+      return NextResponse.json(
+        { error: `Rate limit exceeded. Try again in ${rl.retryAfterSec}s.` },
+        {
+          status: 429,
+          headers: { "Retry-After": String(rl.retryAfterSec) },
+        }
+      );
+    }
+
     const body = await req.json();
     const { type, ...data } = body;
 
@@ -58,11 +71,9 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ result });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Generate error:", error);
-    return NextResponse.json(
-      { error: error.message || "Generation failed" },
-      { status: 500 }
-    );
+    const message = error instanceof Error ? error.message : "Generation failed";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

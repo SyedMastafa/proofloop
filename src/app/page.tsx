@@ -120,7 +120,6 @@ const audiences = ["Product-led growth", "Customer success", "Sales enablement",
 export default function Home() {
   return (
     <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
-      {/* Nav */}
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-[var(--border)] bg-[var(--nav-bg)] backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
           <Link href="/" className="flex items-center gap-2.5">
@@ -161,7 +160,6 @@ export default function Home() {
         </div>
       </nav>
 
-      {/* Hero */}
       <section className="relative overflow-hidden pt-28 pb-16 sm:pt-32 sm:pb-20">
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
           <div className="orb orb-a" />
@@ -225,7 +223,6 @@ export default function Home() {
             Free plan · No credit card · AI polish included
           </p>
 
-          {/* Hero quote */}
           <div className="hero-in hero-delay-6 mx-auto mt-12 max-w-xl rounded-2xl border border-[var(--border)] bg-[var(--card)]/80 p-5 text-left backdrop-blur">
             <p className="text-sm leading-relaxed text-[var(--muted-strong)]">
               “This is changing the game on getting social proof and making it effortless for our
@@ -237,7 +234,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Product mock */}
         <div className="hero-in hero-delay-6 relative mx-auto mt-14 max-w-3xl px-6">
           <div className="mock-shimmer relative overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--card)] shadow-2xl shadow-indigo-500/10">
             <div className="flex items-center gap-2 border-b border-[var(--border)] px-4 py-3">
@@ -269,7 +265,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Audience strip */}
       <Reveal>
         <section className="border-y border-[var(--border)] bg-[var(--surface)] py-8">
           <div className="mx-auto max-w-6xl px-6">
@@ -290,7 +285,6 @@ export default function Home() {
         </section>
       </Reveal>
 
-      {/* Without vs With — Senja-style */}
       <section className="py-24 sm:py-28">
         <div className="mx-auto max-w-5xl px-6">
           <Reveal>
@@ -336,7 +330,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Wall of love */}
       <section id="proof" className="border-t border-[var(--border)] bg-[var(--surface)] py-24 sm:py-28">
         <div className="mx-auto max-w-6xl px-6">
           <Reveal>
@@ -367,7 +360,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Features */}
       <section id="features" className="py-24 sm:py-28">
         <div className="mx-auto max-w-6xl px-6">
           <Reveal>
@@ -407,12 +399,11 @@ export default function Home() {
         </div>
       </section>
 
-      {/* How it works */}
       <section id="how" className="border-t border-[var(--border)] py-24 sm:py-28">
         <div className="mx-auto max-w-6xl px-6">
           <Reveal>
             <h2 className="mb-3 text-center text-3xl font-bold tracking-tight text-[var(--foreground)] sm:text-4xl">
-              Start collecting & sharing proof in minutes
+              Start collecting &amp; sharing proof in minutes
             </h2>
             <p className="mx-auto mb-14 max-w-lg text-center text-[var(--muted)]">
               Three steps. No design team. No waiting on “we’ll write the case study next quarter.”
@@ -434,7 +425,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Final CTA */}
       <Reveal>
         <section className="border-t border-[var(--border)] py-24">
           <div className="mx-auto max-w-3xl px-6 text-center">
@@ -463,10 +453,9 @@ export default function Home() {
         </section>
       </Reveal>
 
-      {/* Footer */}
       <footer className="border-t border-[var(--border)] py-12">
         <div className="mx-auto grid max-w-6xl gap-10 px-6 sm:grid-cols-4">
-          <div className="sm:col-span-1">
+          <div>
             <div className="mb-3 flex items-center gap-2">
               <div className="flex h-7 w-7 items-center justify-center rounded-md bg-[var(--primary)] text-[10px] font-bold text-white">
                 P
@@ -474,7 +463,7 @@ export default function Home() {
               <span className="font-semibold text-[var(--foreground)]">ProofLoop</span>
             </div>
             <p className="text-sm text-[var(--muted)]">
-              Automated customer proof & referrals for B2B SaaS.
+              Automated customer proof &amp; referrals for B2B SaaS.
             </p>
           </div>
           <div>
@@ -507,13 +496,24 @@ export default function Home() {
               <Link href="/login" className="hover:text-[var(--foreground)]">
                 Log in
               </Link>
+              <a href="mailto:support@proofloop.app" className="hover:text-[var(--foreground)]">
+                Support
+              </a>
             </div>
           </div>
           <div>
             <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-[var(--muted)]">
               Legal
             </p>
-            <p className="text-sm text-[var(--muted)]">© 2026 ProofLoop</p>
+            <div className="flex flex-col gap-2 text-sm text-[var(--muted-strong)]">
+              <Link href="/privacy" className="hover:text-[var(--foreground)]">
+                Privacy
+              </Link>
+              <Link href="/terms" className="hover:text-[var(--foreground)]">
+                Terms
+              </Link>
+              <p className="text-[var(--muted)]">© 2026 ProofLoop</p>
+            </div>
           </div>
         </div>
       </footer>
