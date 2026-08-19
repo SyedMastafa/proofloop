@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { saveStory } from "@/lib/storage";
 import { AppHeader } from "@/components/app-header";
+import { track } from "@/lib/track";
 
 type Tab = "testimonial" | "case-study" | "social";
 
@@ -60,6 +61,7 @@ export default function DashboardPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed");
       setResult(data.result);
+      track("story_generated", { type: activeTab });
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Error");
     } finally {
@@ -91,6 +93,7 @@ export default function DashboardPage() {
             : undefined,
       });
       setSavedId(story.id);
+      track("story_saved", { type: activeTab, id: story.id });
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Save failed");
     } finally {
